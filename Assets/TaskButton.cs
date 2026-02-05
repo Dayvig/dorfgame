@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static ModelGame;
 
-public class BuildingButton : MonoBehaviour
+public class TaskButton : MonoBehaviour
 {
-    public Button buildingSelector;
-    public Building thisBuilding;
+    public Button taskSelector;
+    public DorfTask thisTask;
     public HexManager.SelectionMode mode;
+
     void Awake()
     {
-        buildingSelector.onClick.AddListener(TaskOnClick);
+        taskSelector.onClick.AddListener(TaskOnClick);
     }
 
     void TaskOnClick()
     {
-        UIManager.instance.currentlySelectedBuilding = thisBuilding;
+        UIManager.instance.currentTask = thisTask;
         HexManager.instance.currentSelectionMode = mode;
         HexManager.instance.onModeChange(mode);
     }

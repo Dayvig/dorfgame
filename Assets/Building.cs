@@ -8,4 +8,6 @@ public class Building : MonoBehaviour
     public SpriteRenderer visual;
     public bool isActive;
 
+    public virtual void onPlace() { }
+
 }

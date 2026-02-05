@@ -11,6 +11,7 @@ public class ResourceManager : MonoBehaviour
 
     public int Food = 0;
     public int Housing = 0;
+    public int Rocks = 0;
 
     private void Start()
     {

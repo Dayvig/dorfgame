@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using static ModelGame;
 
 public class UIManager : MonoBehaviour
 {
@@ -9,6 +11,7 @@ public class UIManager : MonoBehaviour
     public float interval = 1.0f;
 
     public Building currentlySelectedBuilding = null;
+    public DorfTask currentTask = DorfTask.NONE;
 
     public static UIManager instance
     {
@@ -17,6 +20,7 @@ public class UIManager : MonoBehaviour
 
     public TextMeshProUGUI foodCounter;
     public TextMeshProUGUI housingCounter;
+    public TextMeshProUGUI rocksCounter;
 
     private void Start()
     {
@@ -40,5 +44,6 @@ public class UIManager : MonoBehaviour
     {
         foodCounter.text = "" + ResourceManager.instance.Food;
         housingCounter.text = "0 / " + ResourceManager.instance.Housing;
+        rocksCounter.text = "" + ResourceManager.instance.Rocks;
     }
 }

@@ -55,10 +55,11 @@ public class Segment : MonoBehaviour {
                 {
                     break;
                 }
-                if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name))
+                if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && HexManager.instance.canBePlaced(b, this))
                 {
                     b.isActive = true;
                     b.onPlace();
+                    parentHex.activeBuildings.Add(b);
                     b.visual.color = new Color(1f, 1f, 1f, 1f);
                     occupied = true;
                 }

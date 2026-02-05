@@ -24,6 +24,15 @@ public class HexManager : MonoBehaviour
     public GameObject debugTextBox;
 
     public List<Hex> hexPath= new List<Hex>();
+    public List<Feature> allFeatures = new List<Feature>();
+
+    public enum SelectionMode
+    {
+        HEX,
+        SEGMENT
+    }
+
+    public SelectionMode currentSelectionMode = SelectionMode.SEGMENT;
 
     public static HexManager instance
     {
@@ -140,6 +149,23 @@ public class HexManager : MonoBehaviour
                 hexScript.gridCoordX = i;
                 hexScript.gridCoordY = k;
                 nextHex.name = "Hex " + hexScript.gridCoordX + "," + hexScript.gridCoordY;
+
+                switch (i, k)
+                {
+                    case (7, 11):
+                            break;
+                    case (8, 11):
+                        break;
+                    case (6, 11):
+                        break;
+                    case (7, 10):
+                        break;
+                    case (8, 10):
+                        break;
+                    default:
+                        hexScript.setFeature(getFeatureByName("Stone"));
+                        break;
+                }
 
                 hexes.Add(hexScript);
             }
@@ -384,6 +410,42 @@ public class HexManager : MonoBehaviour
             }
         }
         return toReturn;
+    }
+
+    public bool canBePlaced(Building b, Segment s)
+    { 
+        return true;
+    }
+
+    public Feature getFeatureByName(string s)
+    {
+        foreach (Feature f in allFeatures)
+        {
+            if (f.name.Equals(s))
+            {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    public void onModeChange(SelectionMode mode)
+    {
+        switch (mode)
+        {
+            case SelectionMode.HEX:
+                foreach (Hex h in hexes)
+                {
+                    h.mainHexCollider.enabled = true;
+                }
+                break;
+            case SelectionMode.SEGMENT:
+                foreach (Hex h in hexes)
+                {
+                    h.mainHexCollider.enabled = false;
+                }
+                break;
+        }
     }
 
 

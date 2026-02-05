@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static ModelGame;
 
 public class Hex : MonoBehaviour
 {
@@ -29,6 +31,9 @@ public class Hex : MonoBehaviour
     public PolygonCollider2D mainHexCollider;
 
     public List<Building> activeBuildings = new List<Building>();
+    public List<Feature> features = new List<Feature>();
+    public List<Feature> activeFeatures = new List<Feature>();
+    public List<Feature> toRemove = new List<Feature>();
 
     // Start is called before the first frame update
     void Awake()
@@ -66,14 +71,72 @@ public class Hex : MonoBehaviour
         h = 0;
         parentHex = null;
     }
-
-    void OnMouseEnter()
+    public void setFeature(Feature f)
     {
+        foreach (Feature test in features)
+        {
+            if (test.name.Equals(f.name))
+            {
+                test.activate();
+            }
+        }
     }
 
-    void OnMouseUp()
+    public void OnMouseEnter()
     {
-        
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+        tint.gameObject.SetActive(false);
+        foreach (Feature f in activeFeatures)
+        {
+            f.onHover();
+        }
+        HexManager.instance.hexHovered = this;
+        cleanUp();
+    }
+
+    public void OnMouseUp()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+        if (HexManager.instance.hexHovered == this)
+        {
+            foreach (Feature f in activeFeatures)
+            {
+                f.onClick();
+            }
+        }
+        cleanUp();
+    }
+
+    public void OnMouseExit()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+        tint.SetActive(false);
+        if (HexManager.instance.hexHovered == this)
+        {
+            foreach (Feature f in activeFeatures)
+            {
+                f.onUnHover();
+            }
+        }
+        cleanUp();
+    }
+
+    void cleanUp()
+    {
+        foreach (Feature f in toRemove)
+        {
+            f.remove();
+        }
+        toRemove.Clear();
     }
 }
 
@@ -111,5 +174,6 @@ public class HexTileCoordinate
         return (Vector2)parentHex.transform.position + (Vector2)localSpaceLocation;
 
     }
+
 
 }

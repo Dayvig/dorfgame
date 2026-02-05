@@ -8,6 +8,7 @@ public class BuildingButton : MonoBehaviour
 {
     public Button buildingSelector;
     public Building thisBuilding;
+    public HexManager.SelectionMode mode;
     void Awake()
     {
         buildingSelector.onClick.AddListener(TaskOnClick);
@@ -16,5 +17,7 @@ public class BuildingButton : MonoBehaviour
     void TaskOnClick()
     {
         UIManager.instance.currentlySelectedBuilding = thisBuilding;
+        HexManager.instance.currentSelectionMode = mode;
+        HexManager.instance.onModeChange(mode);
     }
 }

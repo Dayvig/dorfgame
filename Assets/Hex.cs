@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -35,6 +36,9 @@ public class Hex : MonoBehaviour
     public List<Feature> activeFeatures = new List<Feature>();
     public List<Feature> toRemove = new List<Feature>();
 
+    public RectTransform progressBar;
+    public Canvas taskbarCanvas;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -56,12 +60,15 @@ public class Hex : MonoBehaviour
         NavigationPoints.Add("SE Edge", new HexTileCoordinate(new Vector2(0.7f, -0.4375f), 6, this).withNavPair(NavigationPoints.GetValueOrDefault("Eastern Navpoint")));
         NavigationPoints.Add("NW Edge", new HexTileCoordinate(new Vector2(-0.7f, 0.4375f), 12, this).withNavPair(NavigationPoints.GetValueOrDefault("Western Navpoint")));
         NavigationPoints.Add("SW Edge", new HexTileCoordinate(new Vector2(-0.7f, -0.4375f), 8, this).withNavPair(NavigationPoints.GetValueOrDefault("Western Navpoint")));
+    }
 
+    private void Start()
+    {
     }
 
     private void Update()
     {
-
+        cleanUp();
     }
 
     public void ResetPathfindingValues()
@@ -80,6 +87,18 @@ public class Hex : MonoBehaviour
                 test.activate();
             }
         }
+    }
+
+    public bool hasFeature(string feature)
+    {
+        foreach (Feature test in activeFeatures)
+        {
+            if (test.name.Equals(feature))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void OnMouseEnter()
@@ -137,6 +156,57 @@ public class Hex : MonoBehaviour
             f.remove();
         }
         toRemove.Clear();
+    }
+    
+    public List<Vector2> miningPoints()
+    {
+        List<HexTileCoordinate> points = new List<HexTileCoordinate>();
+        List<Vector2> vector2s = new List<Vector2>();
+
+        for (int i = 0; i < neighbors.Length; i++)
+        {
+            Hex current = neighbors[i];
+            if (current != null && !current.hasFeature("Stone")){
+                switch (i)
+                {
+                    case 0:
+                        points.Add(NavigationPoints.GetValueOrDefault("Top"));
+                        points.Add(NavigationPoints.GetValueOrDefault("NE Corner"));
+                        points.Add(NavigationPoints.GetValueOrDefault("NW Corner"));
+                        break;
+                    case 1:
+                        points.Add(NavigationPoints.GetValueOrDefault("NE Corner"));
+                        points.Add(NavigationPoints.GetValueOrDefault("NE Edge"));
+                        points.Add(NavigationPoints.GetValueOrDefault("Right"));
+                        break;
+                    case 2:
+                        points.Add(NavigationPoints.GetValueOrDefault("SE Corner"));
+                        points.Add(NavigationPoints.GetValueOrDefault("SE Edge"));
+                        points.Add(NavigationPoints.GetValueOrDefault("Right"));
+                        break;
+                    case 3:
+                        points.Add(NavigationPoints.GetValueOrDefault("SE Corner"));
+                        points.Add(NavigationPoints.GetValueOrDefault("Bottom"));
+                        points.Add(NavigationPoints.GetValueOrDefault("SW Corner"));
+                        break;
+                    case 4:
+                        points.Add(NavigationPoints.GetValueOrDefault("SW Edge"));
+                        points.Add(NavigationPoints.GetValueOrDefault("Left"));
+                        points.Add(NavigationPoints.GetValueOrDefault("SW Corner"));
+                        break;
+                    case 5:
+                        points.Add(NavigationPoints.GetValueOrDefault("NW Edge"));
+                        points.Add(NavigationPoints.GetValueOrDefault("Left"));
+                        points.Add(NavigationPoints.GetValueOrDefault("NW Corner"));
+                        break;
+                }
+            }
+        }
+        foreach (HexTileCoordinate tile in points)
+        {
+            vector2s.Add(tile.absoluteLoc());
+        }
+        return vector2s.Distinct().ToList();
     }
 }
 

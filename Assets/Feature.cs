@@ -22,8 +22,6 @@ public class Feature : MonoBehaviour
         if (parentHex.activeFeatures.Contains(this)) {
             parentHex.activeFeatures.Remove(this);
         }
-        ResourceManager.instance.Rocks += 20;
-        UIManager.instance.updateCounterDisplay();
     }
 
     public virtual void onHover()

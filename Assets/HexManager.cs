@@ -270,8 +270,6 @@ public class HexManager : MonoBehaviour
         //If in same hex
         if (start.parentHex == end.parentHex)
         {
-            Debug.Log("Same Hex iter");
-
             //If on an edge
             if (start.edgeId != -99 && end.edgeId != -99)
             {
@@ -393,7 +391,7 @@ public class HexManager : MonoBehaviour
         }
         return toReturn;
     }
-    HexTileCoordinate closestCoordinateToLoc(Vector2 currentPos, Hex toCheck, bool edgesOnly)
+    public HexTileCoordinate closestCoordinateToLoc(Vector2 currentPos, Hex toCheck, bool edgesOnly)
     {
         float least = -1;
         HexTileCoordinate toReturn = null;

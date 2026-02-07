@@ -10,16 +10,24 @@ public class TaskButton : MonoBehaviour
     public Button taskSelector;
     public DorfTask thisTask;
     public HexManager.SelectionMode mode;
+    public bool canPerform = true;
 
     void Awake()
     {
         taskSelector.onClick.AddListener(TaskOnClick);
     }
 
+    private void Update()
+    {
+    }
+
     void TaskOnClick()
     {
-        UIManager.instance.currentTask = thisTask;
-        HexManager.instance.currentSelectionMode = mode;
-        HexManager.instance.onModeChange(mode);
+        if (canPerform)
+        {
+            UIManager.instance.currentTask = thisTask;
+            HexManager.instance.currentSelectionMode = mode;
+            HexManager.instance.onModeChange(mode);
+        }
     }
 }

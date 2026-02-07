@@ -132,4 +132,8 @@ MonoBehaviour:
   plot: {fileID: 1340785897731168095}
   visual: {fileID: 4609109847366919466}
   isActive: 0
+  isBuilding: 0
+  costs:
+  - numericalCost: 20
+    type: Rocks
   parentSegment: {fileID: 0}

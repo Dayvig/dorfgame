@@ -12,7 +12,8 @@ public class ModelGame : MonoBehaviour
     public enum DorfTask
     {
         MINE,
-        NONE
+        NONE,
+        BUILD
     }
 
     private void Start()

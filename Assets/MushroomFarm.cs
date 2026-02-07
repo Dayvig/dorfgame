@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ModelGame;
 
 public class MushroomFarm : SegmentBuilding
 {
@@ -23,4 +24,20 @@ public class MushroomFarm : SegmentBuilding
         }
     }
 
+    public override void setTask(Segment seg)
+    {
+        DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(1.0f, DorfTask.BUILD,
+        () => {
+            isActive = true;
+            onPlace();
+            seg.parentHex.activeBuildings.Add(this);
+            visual.color = new Color(1f, 1f, 1f, 1f);
+            visual.gameObject.SetActive(true);
+            seg.occupied = true;
+            isBuilding = false;
+        },
+        gameObject.transform.position, seg);
+        DorfManager.instance.assignTask(thisTask);
+        isBuilding = true;
+    }
 }

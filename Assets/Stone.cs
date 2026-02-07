@@ -48,7 +48,14 @@ public class Stone : Feature
         if (UIManager.instance.currentTask.Equals(DorfTask.MINE))
         {
             taskHover.gameObject.SetActive(false);
-            parentHex.toRemove.Add(this);
+            DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(4.0f, DorfTask.MINE, 
+                () => { parentHex.toRemove.Add(this);
+                    taskHover.gameObject.SetActive(false);
+                    ResourceManager.instance.Rocks += 20;
+                    UIManager.instance.updateCounterDisplay();
+                }
+                , parentHex.miningPoints(), parentHex);
+            DorfManager.instance.allCurrentTasks.Add(thisTask);
         }
     }
 }

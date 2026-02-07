@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using static ModelGame;
 using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class Segment : MonoBehaviour {
@@ -41,7 +42,8 @@ public class Segment : MonoBehaviour {
         HexManager.instance.segmentHovered = this;
     }
 
-    public void OnMouseUp()
+
+public void OnMouseUp()
     {
         if (EventSystem.current.IsPointerOverGameObject() || occupied)
         {
@@ -57,11 +59,8 @@ public class Segment : MonoBehaviour {
                 }
                 if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && HexManager.instance.canBePlaced(b, this))
                 {
-                    b.isActive = true;
-                    b.onPlace();
-                    parentHex.activeBuildings.Add(b);
-                    b.visual.color = new Color(1f, 1f, 1f, 1f);
-                    occupied = true;
+                    b.setTask(this);
+                    b.onPlotPlaced();
                 }
             }
         }
@@ -69,14 +68,14 @@ public class Segment : MonoBehaviour {
 
     public void OnMouseExit()
     {
-                if (EventSystem.current.IsPointerOverGameObject())
+        if (EventSystem.current.IsPointerOverGameObject())
         {
             return;
         }
         tint.SetActive(false);
         foreach (Building b in plots)
         {
-            if (!b.isActive)
+            if (!b.isActive && !b.isBuilding)
             {
                 b.plot.SetActive(false);
             }

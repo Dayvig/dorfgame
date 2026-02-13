@@ -27,7 +27,7 @@ public class TaskButton : MonoBehaviour
         {
             UIManager.instance.currentTask = thisTask;
             HexManager.instance.currentSelectionMode = mode;
-            HexManager.instance.onModeChange(mode);
+            HexManager.instance.changeMode(mode);
         }
     }
 }

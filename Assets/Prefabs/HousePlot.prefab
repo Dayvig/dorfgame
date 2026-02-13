@@ -135,5 +135,19 @@ MonoBehaviour:
   isBuilding: 0
   costs:
   - numericalCost: 20
-    type: Rocks
+    type: 1
+    markedAsComplete: 0
+  gatheredBuildingResources: []
+  selectable: 0
+  menuObjects: []
+  selected: 0
+  assignedDorves:
+  - {fileID: 0}
+  - {fileID: 0}
+  availableSlots: 0000
+  buttons: []
+  parentHex: {fileID: 0}
+  storage: []
+  isBig: 0
+  constructionTime: 4
   parentSegment: {fileID: 0}

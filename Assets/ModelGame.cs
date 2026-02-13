@@ -13,7 +13,11 @@ public class ModelGame : MonoBehaviour
     {
         MINE,
         NONE,
-        BUILD
+        BUILD,
+        WORKBUILDING,
+        HARVEST,
+        HAUL,
+        EAT
     }
 
     private void Start()

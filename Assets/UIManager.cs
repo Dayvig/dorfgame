@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     public float interval = 1.0f;
 
     public Building currentlySelectedBuilding = null;
+    public Building currentActiveBuildingChangingProperties = null;
     public DorfTask currentTask = DorfTask.NONE;
 
     public static UIManager instance
@@ -21,14 +22,27 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI foodCounter;
     public TextMeshProUGUI housingCounter;
     public TextMeshProUGUI rocksCounter;
+    public TextMeshProUGUI rockDustCounter;
 
+    public TextMeshProUGUI foodClutterCounter;
+    public TextMeshProUGUI rocksClutterCounter;
+    public TextMeshProUGUI rockDustClutterCounter;
+
+    public List<TextMeshProUGUI> buildingCostTexts = new List<TextMeshProUGUI>();
+    public List<Building> allBuildings = new List<Building>();
     private void Start()
     {
         instance = this;
     }
 
+    private void Awake()
+    {
+    }
+
     private void Update()
     {
+        updateCosts();
+
         if (tickCtr < 0.0f)
         {
             updateCounterDisplay();
@@ -38,6 +52,17 @@ public class UIManager : MonoBehaviour
         {
             tickCtr -= Time.deltaTime;
         }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            if (currentActiveBuildingChangingProperties != null)
+            {
+                currentActiveBuildingChangingProperties.deselect();
+            }
+            currentActiveBuildingChangingProperties = null;
+            currentlySelectedBuilding = null;
+            HexManager.instance.changeMode(HexManager.SelectionMode.HEX);
+        }
     }
 
     public void updateCounterDisplay()
@@ -45,5 +70,24 @@ public class UIManager : MonoBehaviour
         foodCounter.text = "" + ResourceManager.instance.Food;
         housingCounter.text = "0 / " + ResourceManager.instance.Housing;
         rocksCounter.text = "" + ResourceManager.instance.Rocks;
+        rockDustCounter.text = "" + ResourceManager.instance.RockDust;
+
+        foodClutterCounter.text = "" + ResourceManager.instance.FoodClutter;
+        rocksClutterCounter.text = "" + ResourceManager.instance.RockClutter;
+        //rockDustClutterCounter.text = "" + ResourceManager.instance.RockDustClutter;
+
+    }
+
+    void updateCosts()
+    {
+        for (int i = 0; i < buildingCostTexts.Count; i++)
+        {
+            string CostString = "Cost:" + "\n";
+            foreach (Building.BuildingCost b in allBuildings[i].costs)
+            {
+                CostString += b.type + " " + b.numericalCost + "\n";
+            }
+            buildingCostTexts[i].text = CostString;
+        }
     }
 }

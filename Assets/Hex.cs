@@ -36,6 +36,9 @@ public class Hex : MonoBehaviour
     public List<Feature> activeFeatures = new List<Feature>();
     public List<Feature> toRemove = new List<Feature>();
 
+    public List<Building> bigBuildings = new List<Building>();
+    public List<Building> activeBigBuildings = new List<Building>();
+
     public RectTransform progressBar;
     public Canvas taskbarCanvas;
 
@@ -103,17 +106,58 @@ public class Hex : MonoBehaviour
 
     public void OnMouseEnter()
     {
+        //Todo write better system for hovers
         if (EventSystem.current.IsPointerOverGameObject())
         {
             return;
+        }
+        if (activeBigBuildings.Count == 0 && !UIManager.instance.currentTask.Equals(DorfTask.MINE))
+        {
+            if (UIManager.instance.currentlySelectedBuilding != null && !UIManager.instance.currentlySelectedBuilding.isBig)
+            {
+                HexManager.instance.changeMode(HexManager.SelectionMode.SEGMENT);
+                return;
+            }
+            else if (UIManager.instance.currentlySelectedBuilding == null)
+            {
+                HexManager.instance.changeMode(HexManager.SelectionMode.SEGMENT);
+                return;
+            }
         }
         tint.gameObject.SetActive(false);
         foreach (Feature f in activeFeatures)
         {
             f.onHover();
         }
+        foreach (Building b in bigBuildings)
+        {
+            if (UIManager.instance.currentlySelectedBuilding == null || !allSegmentsClear())
+            {
+                break;
+            }
+            if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name))
+            {
+                b.plot.SetActive(true);
+                if (!b.isActive)
+                {
+                    b.visual.color = new Color(1f, 1f, 1f, 0.4f);
+                }
+            }
+        }
         HexManager.instance.hexHovered = this;
         cleanUp();
+    }
+
+    public bool allSegmentsClear()
+    {
+        foreach (Segment s in segments)
+        {
+            if (s.occupied)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void OnMouseUp()
@@ -127,6 +171,29 @@ public class Hex : MonoBehaviour
             foreach (Feature f in activeFeatures)
             {
                 f.onClick();
+            }
+        }
+        foreach (Building b in bigBuildings)
+        {
+            if (UIManager.instance.currentlySelectedBuilding == null)
+            {
+                if (b.isActive && b.selectable)
+                {
+                    if (UIManager.instance.currentActiveBuildingChangingProperties != null)
+                    {
+                        UIManager.instance.currentActiveBuildingChangingProperties.deselect();
+                    }
+                    UIManager.instance.currentActiveBuildingChangingProperties = b;
+                    b.select();
+                }
+                continue;
+            }
+            if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && HexManager.instance.canBePlaced(b, this))
+            {
+                b.parentHex = this;
+                b.setTask(this);
+                b.onPlotPlaced();
+                activeBigBuildings.Add(b);
             }
         }
         cleanUp();
@@ -144,6 +211,13 @@ public class Hex : MonoBehaviour
             foreach (Feature f in activeFeatures)
             {
                 f.onUnHover();
+            }
+        }
+        foreach (Building b in bigBuildings)
+        {
+            if (!b.isActive && !b.isBuilding)
+            {
+                b.plot.SetActive(false);
             }
         }
         cleanUp();

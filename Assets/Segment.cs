@@ -12,10 +12,15 @@ public class Segment : MonoBehaviour {
 
     public bool occupied = false;
 
+    public RectTransform progressBar;
+    public Canvas taskbarCanvas;
+
+
     public void OnMouseEnter()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
+        if (parentHex.activeBigBuildings.Count != 0 || UIManager.instance.currentTask.Equals(DorfTask.MINE))
         {
+            HexManager.instance.changeMode(HexManager.SelectionMode.HEX);
             return;
         }
         foreach (Segment s in parentHex.segments)
@@ -45,7 +50,7 @@ public class Segment : MonoBehaviour {
 
 public void OnMouseUp()
     {
-        if (EventSystem.current.IsPointerOverGameObject() || occupied)
+        if (EventSystem.current.IsPointerOverGameObject())
         {
             return;
         }
@@ -55,10 +60,29 @@ public void OnMouseUp()
             {
                 if (UIManager.instance.currentlySelectedBuilding == null)
                 {
-                    break;
+                    if (b.isActive && b.selectable)
+                    {
+                        if (b.selected)
+                        {
+                            b.deselect();
+                            continue;
+                        }
+                        if (UIManager.instance.currentActiveBuildingChangingProperties != null)
+                        {
+                            UIManager.instance.currentActiveBuildingChangingProperties.deselect();
+                        }
+                        UIManager.instance.currentActiveBuildingChangingProperties = b;
+                        b.select();
+                    }
+                    continue;
                 }
                 if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && HexManager.instance.canBePlaced(b, this))
                 {
+                    b.parentHex = this.parentHex;
+                    if (b is SegmentBuilding){
+                        SegmentBuilding seg = (SegmentBuilding)b;
+                        seg.parentSegment = this;
+                    }
                     b.setTask(this);
                     b.onPlotPlaced();
                 }

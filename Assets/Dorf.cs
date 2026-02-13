@@ -10,11 +10,15 @@ public class Dorf : MonoBehaviour
 {
 
     public List<Vector2> waypoints = new List<Vector2>();
+    public List<WorldResource> resourcesToPickUp = new List<WorldResource>();
+    public List<WorldResource> heldResources = new List<WorldResource>();
 
     public GameObject startDebugText;
     public GameObject endDebugText;
 
     HexTileCoordinate storedCoord;
+    public float stateUpdateInterval = 1.0f;
+    public float stateTimer = 0.0f;
 
     public DorfManager.DorfTaskInProgress taskInProgress;
 
@@ -22,7 +26,7 @@ public class Dorf : MonoBehaviour
     {
         WALKING,
         PERFORMINGTASK,
-        IDLE
+        IDLE   
     }
 
     public DorfTask currentTask = DorfTask.NONE;
@@ -30,6 +34,12 @@ public class Dorf : MonoBehaviour
     public DorfState currentState = DorfState.IDLE;
 
     public float workRate = 1.0f;
+
+    public float carryingCapacity = 10;
+    public float currentHaul = 0;
+
+    public float maxFood = 100f;
+    public float currentFood = 50f;
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +50,15 @@ public class Dorf : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (stateTimer > stateUpdateInterval)
+        {
+            currentFood -= 0.1f;
+            stateTimer -= stateUpdateInterval;
+        }
+        else
+        {
+            stateTimer += Time.deltaTime;
+        }
         if (waypoints.Count > 0)
         {
             transform.position = Vector2.MoveTowards(transform.position, waypoints[0], 0.006f);
@@ -51,6 +70,10 @@ public class Dorf : MonoBehaviour
         if (taskInProgress != null && Vector2.Distance(transform.position, currentTaskTargetPos) < 0.1f)
         {
             currentState = DorfState.PERFORMINGTASK;
+        }
+        foreach (WorldResource w in heldResources)
+        {
+            w.transform.position = this.transform.position + new Vector3(0f, -0.25f, 0f);
         }
     }
 

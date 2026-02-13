@@ -5,7 +5,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[ExecuteAlways]
 public class HexManager : MonoBehaviour
 {
     public List<Hex> hexes = new List<Hex>();
@@ -410,9 +409,29 @@ public class HexManager : MonoBehaviour
         return toReturn;
     }
 
+    public Hex closestHexToLoc(Vector2 currentPos)
+    {
+        float least = -1;
+        Hex toReturn = null;
+        foreach (Hex h in hexes)
+        {
+            float dist = (Vector2.Distance(currentPos, h.gameObject.transform.position));
+            if (least == -1 || dist < least)
+            {
+                least = dist;
+                toReturn = h;
+            }
+
+        }
+        return toReturn;
+    }
     public bool canBePlaced(Building b, Segment s)
     { 
         return true;
+    }
+    public bool canBePlaced(Building b, Hex h)
+    {
+        return h.allSegmentsClear();
     }
 
     public Feature getFeatureByName(string s)
@@ -427,8 +446,10 @@ public class HexManager : MonoBehaviour
         return null;
     }
 
-    public void onModeChange(SelectionMode mode)
+    public void changeMode(SelectionMode mode)
     {
+        HexManager.instance.currentSelectionMode = mode;
+
         switch (mode)
         {
             case SelectionMode.HEX:

@@ -38,8 +38,9 @@ public class BuildingButton : MonoBehaviour
         {
             UIManager.instance.currentlySelectedBuilding = thisBuilding;
             HexManager.instance.currentSelectionMode = mode;
-            HexManager.instance.onModeChange(mode);
+            HexManager.instance.changeMode(mode);
             UIManager.instance.updateCounterDisplay();
+            UIManager.instance.currentTask = ModelGame.DorfTask.BUILD;
         }
     }
 }

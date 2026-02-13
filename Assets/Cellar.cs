@@ -3,15 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using static ModelGame;
 
-public class BasicHouse : SegmentBuilding
+public class Cellar : SegmentBuilding
 {
-    public override void onPlace()
-    {
-        base.onPlace();
-        ResourceManager.instance.Housing++;
-        UIManager.instance.updateCounterDisplay();
-    }
-
     public override void setTask(Segment seg)
     {
         gatheredBuildingResources.Clear();

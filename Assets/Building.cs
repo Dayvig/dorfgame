@@ -25,7 +25,21 @@ public class Building : MonoBehaviour
     public bool isBig = false;
     public float constructionTime;
 
+    public enum BuildingTypes
+    {
+        HOUSE,
+        STORAGE,
+        MISC
+    }
+
     public virtual void onPlace() {
+        if (storage.Count > 0)
+        {
+            ResourceManager.instance.storageBuildings.Add(this);
+        }
+    }
+    public virtual void onPlace(Dorf builder)
+    {
         if (storage.Count > 0)
         {
             ResourceManager.instance.storageBuildings.Add(this);

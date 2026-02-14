@@ -75,7 +75,7 @@ public class Stone : Feature
                 {
                     parentHex.toRemove.Add(this);
                     taskHover.gameObject.SetActive(false);
-                    ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, 50);
+                    ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, 50, true);
                     UIManager.instance.updateCounterDisplay();
                     for (int i = 0; i < 10; i++)
                     {

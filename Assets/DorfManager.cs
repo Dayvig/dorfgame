@@ -49,6 +49,20 @@ public class DorfManager : MonoBehaviour
                 tasksInProgressDisplay.Add(t.type.ToString());
             }
 
+            //house dorves
+            foreach (Building b in ResourceManager.instance.housing)
+            {
+                BasicHouse house = (BasicHouse)b;
+                if (house.owners.Count >= house.capacity) { continue; }
+                foreach (Dorf d in dorves)
+                {
+                    if (d.home == null)
+                    {
+                        d.home = house;
+                    }
+                }
+            }
+
             List<Dorf> idleDorves = new List<Dorf>();
             foreach (Dorf d in dorves)
             {
@@ -111,22 +125,16 @@ public class DorfManager : MonoBehaviour
         while (idleDorves.Count > 0)
         {
             BasicHouse house = null;
-            //find house
-            foreach (Hex h in HexManager.instance.hexes)
+            foreach (Building b in ResourceManager.instance.housing)
             {
-                foreach (Building b in h.activeBuildings)
-                {
-                    if (b is BasicHouse)
-                    {
-                        house = (BasicHouse)b;
-                    }
-                }
+                house = (BasicHouse)b;
+                break;
             }
-
             //if starving, eat
             for (int i = 0; i < idleDorves.Count; i++)
             {
                 Dorf d = idleDorves[i];
+
                 if (d.currentFood <= d.maxFood * 0.25f)
                 {
                     if (gatherFood(d, false, house))
@@ -184,9 +192,9 @@ public class DorfManager : MonoBehaviour
                 for (int i = 0; i < idleDorves.Count; i++)
                 {
                     Dorf d = idleDorves[i];
-                    if (d.currentFood <= d.maxFood * 0.75f)
+                    if (d.currentFood <= d.maxFood * 0.75f && d.fullness >= d.mealInterval)
                     {
-                        if (gatherFood(d, true, house))
+                        if (gatherFood(d, true, d.home == null ? house : d.home))
                         {
                             idleDorves.Remove(d);
                         }
@@ -273,13 +281,7 @@ public class DorfManager : MonoBehaviour
             return;
         }
         if (!hasValidStorageBuilding(targetDorf.heldResources[0].type, targetDorf.heldResources[0].value)){
-            Debug.Log("Dropping Resource");
-            foreach (WorldResource w in targetDorf.heldResources)
-            {
-                w.toBePickedUp = false;
-            }
-            targetDorf.currentHaul = 0;
-            targetDorf.heldResources.Clear();
+            dropAllResources(targetDorf);
             return;
         }
         DorfManager.DorfTaskInProgress newTask;
@@ -307,17 +309,13 @@ public class DorfManager : MonoBehaviour
                             s.occupiedStorage += w.value;
                             ResourceManager.instance.stowResource(w.type, (int)w.value);
                             ResourceManager.instance.toBeDestroyed.Add(w);
-                            UIManager.instance.updateCounterDisplay();
-                        }
-                        else
-                        {
-                            w.toBePickedUp = false;
+                            clutter.Remove(w);
                         }
                     }
                 }
             }
-            targetDorf.currentHaul = 0;
-            targetDorf.heldResources.Clear();
+            dropAllResources(targetDorf);
+            UIManager.instance.updateCounterDisplay();
         });
         assignDorfToTask(targetDorf, newTask);
         DorfManager.instance.taskQueue.Add(newTask);
@@ -426,7 +424,6 @@ public class DorfManager : MonoBehaviour
         //if none exist and storage exists, go to storage and pickup to max
         if (r == null)
         {
-
             Building close = closestStorageBuilding(hungry.gameObject.transform.position, ResourceManager.ResourceType.FOOD, 1, false);
             if (close != null)
             {
@@ -448,7 +445,7 @@ public class DorfManager : MonoBehaviour
                             if (newResource.value > slot.occupiedStorage)
                             {
                                 newResource.value = slot.occupiedStorage;
-                                newResource.weight = (1/valueToWeight) * newResource.weight;
+                                newResource.weight = (1 / valueToWeight) * newResource.weight;
                             }
                             slot.occupiedStorage -= newResource.value;
                             UIManager.instance.updateCounterDisplay();
@@ -456,6 +453,7 @@ public class DorfManager : MonoBehaviour
                     }
                     if (newResource != null)
                     {
+                        newResource.toBePickedUp = false;
                         hungry.heldResources.Add(newResource);
                         eatFood(hungry, comfortable, home);
                     }
@@ -485,8 +483,14 @@ public class DorfManager : MonoBehaviour
                     eatFood(hungry, comfortable, home);
                 }
             });
+            r.toBePickedUp = true;
             assignDorfToTask(hungry, thisTask);
             DorfManager.instance.taskQueue.Add(thisTask);
+            return true;
+        }
+        if (hungry.heldResources.Count != 0)
+        {
+            eatFood(hungry, comfortable, home);
             return true;
         }
         return false;
@@ -502,7 +506,6 @@ public class DorfManager : MonoBehaviour
         {
             foreach (Dorf d in thisTask.wereAssigned)
             {
-                Debug.Log("Dorf");
                 gatherBuildingResource(d, toConstruct);
             }
         });
@@ -544,9 +547,6 @@ public class DorfManager : MonoBehaviour
                 return true;
             }
         }
-
-        Debug.Log("Null check, has no resources left to take: " + (resourcesLeftToTake.Count == 0));
-
         ResourceManager.ResourceType nextResourceType = resourcesLeftToTake[0];
 
         //find next loose resource item
@@ -555,7 +555,6 @@ public class DorfManager : MonoBehaviour
         //if none exist and storage exists, go to storage and pickup to max
         if (r == null)
         {
-
             Building close = closestStorageBuilding(builder.gameObject.transform.position, nextResourceType, 1, false);
             if (close != null)
             {
@@ -564,50 +563,58 @@ public class DorfManager : MonoBehaviour
                 close.gameObject.transform.position, close.parentHex);
                 thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
                 {
-                    WorldResource newResource = null;
-                    foreach (Building.StorageSlot slot in close.storage)
+                    if (!hasEnoughMaterials(toConstruct))
                     {
-                        if (slot.type == nextResourceType)
+                        WorldResource newResource = null;
+                        foreach (Building.StorageSlot slot in close.storage)
                         {
-                            newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, nextResourceType, this.gameObject.transform.position, 1.0f);
-
-                            float targetValue = 0;
-                            foreach (Building.BuildingCost costToCheck in toConstruct.costs)
+                            if (slot.type == nextResourceType)
                             {
-                                if (newResource.type == costToCheck.type)
+                                newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, nextResourceType, this.gameObject.transform.position, 1.0f);
+
+                                float targetValue = 0;
+                                foreach (Building.BuildingCost costToCheck in toConstruct.costs)
                                 {
-                                    targetValue = costToCheck.numericalCost;
+                                    if (newResource.type == costToCheck.type)
+                                    {
+                                        targetValue = costToCheck.numericalCost;
+                                    }
+                                }
+                                float valueToWeight = newResource.value / newResource.weight;
+                                if (((targetValue * valueToWeight) + builder.currentHaul) > builder.carryingCapacity)
+                                {
+                                    targetValue = (builder.carryingCapacity - builder.currentHaul) * (1 / valueToWeight);
+                                }
+
+                                newResource.weight = targetValue * valueToWeight;
+                                newResource.value = targetValue;
+
+                                if (newResource.value > slot.occupiedStorage)
+                                {
+                                    newResource.value = slot.occupiedStorage;
+                                    newResource.weight = (1 / valueToWeight) * newResource.weight;
+                                }
+                                slot.occupiedStorage -= newResource.value;
+                                UIManager.instance.updateCounterDisplay();
+                            }
+                        }
+                        if (newResource != null)
+                        {
+                            newResource.toBePickedUp = true;
+                            builder.heldResources.Add(newResource);
+                            foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
+                            {
+                                if (gathered.type == newResource.type)
+                                {
+                                    gathered.numericalCost += (int)newResource.value;
                                 }
                             }
-                            float valueToWeight = newResource.value / newResource.weight;
-                            if (((targetValue * valueToWeight) + builder.currentHaul) > builder.carryingCapacity)
-                            {
-                                targetValue = (builder.carryingCapacity - builder.currentHaul) * (1 / valueToWeight); 
-                            }
-
-                            newResource.weight = targetValue * valueToWeight;
-                            newResource.value = targetValue;
-
-                            if (newResource.value > slot.occupiedStorage)
-                            {
-                                newResource.value = slot.occupiedStorage;
-                                newResource.weight = (1 / valueToWeight) * newResource.weight;
-                            }
-                            slot.occupiedStorage -= newResource.value;
-                            UIManager.instance.updateCounterDisplay();
+                            gatherBuildingResource(builder, toConstruct);
                         }
                     }
-                    if (newResource != null)
+                    else
                     {
-                        builder.heldResources.Add(newResource);
-                        foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
-                        {
-                            if (gathered.type == newResource.type)
-                            {
-                                gathered.numericalCost += (int)newResource.value;
-                            }
-                        }
-                        gatherBuildingResource(builder, toConstruct);
+                        dropAllResources(builder);
                     }
                 });
                 assignDorfToTask(builder, thisTask);
@@ -622,35 +629,43 @@ public class DorfManager : MonoBehaviour
             r.gameObject.transform.position, r.thisHex);
             thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
             {
-                Debug.Log("Resolving");
-                Dorf currentDorf = builder;
-                currentDorf.heldResources.Add(r);
-                currentDorf.currentHaul += r.weight;
-                ResourceManager.instance.stowResource(r.type, (int)r.value);
+                if (!hasEnoughMaterials(toConstruct))
+                {
+                    Debug.Log("Resolving");
+                    Dorf currentDorf = builder;
+                    currentDorf.heldResources.Add(r);
+                    currentDorf.currentHaul += r.weight;
+                    ResourceManager.instance.stowResource(r.type, (int)r.value);
 
-                foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
-                {
-                    if (gathered.type == r.type)
+                    foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
                     {
-                        gathered.numericalCost += (int)r.value;
+                        if (gathered.type == r.type)
+                        {
+                            gathered.numericalCost += (int)r.value;
+                        }
                     }
-                }
 
-                if (currentDorf.currentHaul >= currentDorf.carryingCapacity || hasEnoughMaterials(toConstruct))
-                {
-                    moveToBuildingSite(currentDorf, toConstruct);
-                }
-                else
-                {
-                    WorldResource closestResource = closestResourceToPickup(currentDorf.gameObject.transform.position, currentDorf.heldResources[0].type, false);
-                    if (closestResource != null)
-                    {
-                        gatherBuildingResource(builder, toConstruct);
-                    }
-                    else
+                    if (currentDorf.currentHaul >= currentDorf.carryingCapacity || hasEnoughMaterials(toConstruct))
                     {
                         moveToBuildingSite(currentDorf, toConstruct);
                     }
+                    else
+                    {
+                        WorldResource closestResource = closestResourceToPickup(currentDorf.gameObject.transform.position, currentDorf.heldResources[0].type, false);
+                        if (closestResource != null)
+                        {
+                            gatherBuildingResource(builder, toConstruct);
+                        }
+                        else
+                        {
+                            moveToBuildingSite(currentDorf, toConstruct);
+                        }
+                    }
+                }
+                else
+                {
+                    r.toBePickedUp = false;
+                    dropAllResources(builder);
                 }
             });
             r.toBePickedUp = true;
@@ -660,6 +675,16 @@ public class DorfManager : MonoBehaviour
         }
         return false;
     }
+
+    public void dropAllResources(Dorf d)
+    {
+        foreach (WorldResource w in d.heldResources)
+        {
+            w.toBePickedUp = false;
+        }
+        d.heldResources.Clear();
+        d.currentHaul = 0;
+    }   
 
     public bool hasEnoughMaterials(Building toConstruct)
     {
@@ -687,7 +712,7 @@ public class DorfManager : MonoBehaviour
         thisTask = new DorfManager.DorfTaskInProgress(0f, DorfTask.HAUL,
         () => { },
         toConstruct.gameObject.transform.position, toConstruct.parentHex);
-        thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
+        thisTask = thisTask.setMaxDorves(thisTask, 4).setResult(thisTask, () =>
         {
             constructBuilding(builder, toConstruct);
         });
@@ -704,18 +729,17 @@ public class DorfManager : MonoBehaviour
             foreach (WorldResource r in builder.heldResources)
             {
                 ResourceManager.instance.toBeDestroyed.Add(r);
-                ResourceManager.instance.consumeResource(r.type, (int)r.value, false);
-                UIManager.instance.updateCounterDisplay();
+                clutter.Remove(r);
             }
-            builder.currentHaul = 0;
-            builder.heldResources.Clear();
+            dropAllResources(builder);
+            UIManager.instance.updateCounterDisplay();
 
             thisTask = new DorfManager.DorfTaskInProgress(toConstruct.constructionTime, DorfTask.BUILD,
             () => { },
             toConstruct.gameObject.transform.position, toConstruct.parentHex);
             thisTask = thisTask.setMaxDorves(thisTask, 4).setResult(thisTask, () =>
             {
-                toConstruct.onPlace();
+                toConstruct.onPlace(builder);
                 toConstruct.parentHex.activeBuildings.Add(toConstruct);
                 toConstruct.visual.color = new Color(1f, 1f, 1f, 1f);
                 toConstruct.visual.gameObject.SetActive(true);
@@ -744,10 +768,11 @@ public class DorfManager : MonoBehaviour
             foreach (WorldResource r in builder.heldResources)
             {
                 ResourceManager.instance.toBeDestroyed.Add(r);
-                UIManager.instance.updateCounterDisplay();
+                clutter.Remove(r);
             }
-            builder.currentHaul = 0;
-            builder.heldResources.Clear();
+            dropAllResources(builder);
+            UIManager.instance.updateCounterDisplay();
+
             gatherBuildingResource(builder, toConstruct);
         }
     }
@@ -767,10 +792,11 @@ public class DorfManager : MonoBehaviour
                     hungry.currentFood += r.value;
                     ResourceManager.instance.toBeDestroyed.Add(r);
                     ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
-                    UIManager.instance.updateCounterDisplay();
+                    hungry.fullness = 0.0f;
+                    clutter.Remove(r);
                 }
-                hungry.currentHaul = 0;
-                hungry.heldResources.Clear();
+                dropAllResources(hungry);
+                UIManager.instance.updateCounterDisplay();
             });
             assignDorfToTask(hungry, thisTask);
             DorfManager.instance.taskQueue.Add(thisTask);
@@ -788,10 +814,10 @@ public class DorfManager : MonoBehaviour
                     hungry.currentFood += r.value;
                     ResourceManager.instance.toBeDestroyed.Add(r);
                     ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
-                    UIManager.instance.updateCounterDisplay();
+                    clutter.Remove(r);
                 }
-                hungry.currentHaul = 0;
-                hungry.heldResources.Clear();
+                dropAllResources(hungry);
+                UIManager.instance.updateCounterDisplay();
             });
             assignDorfToTask(hungry, thisTask);
             DorfManager.instance.taskQueue.Add(thisTask);

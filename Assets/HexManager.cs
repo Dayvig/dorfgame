@@ -5,12 +5,13 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+[ExecuteAlways]
 public class HexManager : MonoBehaviour
 {
     public List<Hex> hexes = new List<Hex>();
     public GameObject hexObject;
     public GameObject gridCenter;
-    bool generatedGrid = false;
+    public bool generateNewGrid = false;
 
     int depth = 12;
 
@@ -470,8 +471,7 @@ public class HexManager : MonoBehaviour
 
     void Update()
     {
-        
-        if (!generatedGrid)
+        if (generateNewGrid)
         {
             foreach (Hex h in hexes)
             {
@@ -481,7 +481,7 @@ public class HexManager : MonoBehaviour
 
             generateHexGrid();
             assignNeighbors(hexes);
-            generatedGrid = true;
+            generateNewGrid = false;
         }
 
     }

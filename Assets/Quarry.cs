@@ -111,10 +111,14 @@ public class Quarry : Building
                     if (d.currentState.Equals(Dorf.DorfState.PERFORMINGTASK)) {
                         if (((float)ResourceManager.instance.RockDust / (float)(ResourceManager.instance.Rocks + ResourceManager.instance.RockDust)) < rockdustConversionRate)
                         {
-                            ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, -1);
-                            ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKDUST, 1);
-                            storage[1].occupiedStorage += 1;
-                            UIManager.instance.updateCounterDisplay();
+                            if (storage[0].occupiedStorage > 0)
+                            {
+                                ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, -1, false);
+                                ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKDUST, 1, false);
+                                storage[1].occupiedStorage += 1;
+                                storage[0].occupiedStorage -= 1;
+                                UIManager.instance.updateCounterDisplay();
+                            }
                         }
                     }
                 }

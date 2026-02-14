@@ -5,10 +5,18 @@ using static ModelGame;
 
 public class BasicHouse : SegmentBuilding
 {
-    public override void onPlace()
+    public List<Dorf> owners = new List<Dorf>();
+    public int capacity = 1;
+    public override void onPlace(Dorf builder)
     {
-        base.onPlace();
-        ResourceManager.instance.Housing++;
+        base.onPlace(builder);
+        ResourceManager.instance.Housing += capacity;
+        if (builder.home == null && owners.Count < capacity)
+        {
+            owners.Add(builder);
+            builder.home = this;
+        }
+        ResourceManager.instance.housing.Add(this);
         UIManager.instance.updateCounterDisplay();
     }
 

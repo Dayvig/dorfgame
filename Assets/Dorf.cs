@@ -20,8 +20,12 @@ public class Dorf : MonoBehaviour
     public float stateUpdateInterval = 1.0f;
     public float stateTimer = 0.0f;
 
+    public float fullness = 0.0f;
+    public float mealInterval = 10.0f;
+
     public DorfManager.DorfTaskInProgress taskInProgress;
 
+    public Building home = null;
     public enum DorfState
     {
         WALKING,
@@ -59,6 +63,8 @@ public class Dorf : MonoBehaviour
         {
             stateTimer += Time.deltaTime;
         }
+        fullness += Time.deltaTime;
+
         if (waypoints.Count > 0)
         {
             transform.position = Vector2.MoveTowards(transform.position, waypoints[0], 0.006f);

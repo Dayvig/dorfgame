@@ -24,6 +24,7 @@ public class ResourceManager : MonoBehaviour
 
     public List<Building> harvestableBuildings = new List<Building>();
     public List<Building> storageBuildings = new List<Building>();
+    public List<Building> housing = new List<Building>();
 
     private void Start()
     {
@@ -53,21 +54,21 @@ public class ResourceManager : MonoBehaviour
         toBeDestroyed.Clear();
     }
 
-    public void addResource(ResourceType type, int amount)
+    public void addResource(ResourceType type, int amount, bool isClutter)
     {
         switch (type)
         {
             case ResourceType.FOOD:
                 Food += amount;
-                FoodClutter += amount;
+                FoodClutter += isClutter ? amount : 0;
                 break;
             case ResourceType.ROCKS:
                 Rocks += amount;
-                RockClutter += amount;
+                RockClutter += isClutter ? amount : 0;
                 break;
             case ResourceType.ROCKDUST:
                 RockDust += amount;
-                RockDustClutter += amount;
+                RockDustClutter += isClutter ? amount : 0;
                 break;
         }
     }

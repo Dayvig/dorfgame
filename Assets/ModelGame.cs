@@ -17,7 +17,8 @@ public class ModelGame : MonoBehaviour
         WORKBUILDING,
         HARVEST,
         HAUL,
-        EAT
+        EAT,
+        REPRODUCE
     }
 
     private void Start()

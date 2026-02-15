@@ -20,6 +20,8 @@ public class DorfManager : MonoBehaviour
     }
 
     public List<Dorf> dorves = new List<Dorf>();
+    public List<Dorf> dorfGraveyard = new List<Dorf>();
+
     public List<DorfTaskInProgress> allCurrentTasks = new List<DorfTaskInProgress>();
     public List<string> tasksInProgressDisplay = new List<string>();
 
@@ -31,6 +33,8 @@ public class DorfManager : MonoBehaviour
     public int globalTaskIDs = 0;
     public float taskAssignTimer = 0.0f;
     public float taskAssignDelay = 0.2f;
+
+    public GameObject DorfRef;
 
     private void Start()
     {
@@ -48,6 +52,14 @@ public class DorfManager : MonoBehaviour
             {
                 tasksInProgressDisplay.Add(t.type.ToString());
             }
+
+            //kill dorves
+            foreach (Dorf d in dorfGraveyard)
+            {
+                d.gameObject.SetActive(false);
+                dorves.Remove(d);
+            }
+
 
             //house dorves
             foreach (Building b in ResourceManager.instance.housing)
@@ -200,6 +212,40 @@ public class DorfManager : MonoBehaviour
                         }
                     }
                 }
+                //reproduce
+                for (int i = 0; i < idleDorves.Count; i++)
+                {
+                    Dorf d = idleDorves[i];
+                    Dorf d2 = null;
+                    if (d.currentFood > d.maxFood * 0.75f && d.horniness >= d.sexInterval)
+                    {
+                        //find next dorf that meets requirements
+                        foreach (Dorf test in idleDorves)
+                        {
+                            if (test.currentFood > test.maxFood * 0.75f && test.horniness >= test.sexInterval && !test.Equals(d))
+                            {
+                                if (test.spouse == null)
+                                {
+                                    d2 = test;
+                                    break;
+                                }
+                                else if (test.spouse.Equals(d))
+                                {
+                                    d2 = test;
+                                    break;
+                                }
+                            }
+                        }
+                        if (d2 != null)
+                        {
+                            if (reproduce(d, d2))
+                            {
+                                idleDorves.Remove(d);
+                                idleDorves.Remove(d2);
+                            }
+                        }
+                    }
+                }
                 return;
             }
         }
@@ -242,6 +288,8 @@ public class DorfManager : MonoBehaviour
         Debug.Log("Creating new pickup task");
         DorfManager.DorfTaskInProgress thisTask;
 
+        if (!hasValidStorageBuilding(ResourceManager.ResourceType.FOOD, r.value)) { return; }
+
         thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
             () => { },
             r.gameObject.transform.position, r.thisHex);
@@ -274,10 +322,9 @@ public class DorfManager : MonoBehaviour
 
     void createNewStorageTask(Dorf targetDorf)
     {
-        Debug.Log("New Storage Task Created");
+        Debug.Log("Creating new storage task");
         if (targetDorf.heldResources[0] == null)
         {
-            Debug.Log("Something went wrong, no resources held");
             return;
         }
         if (!hasValidStorageBuilding(targetDorf.heldResources[0].type, targetDorf.heldResources[0].value)){
@@ -286,8 +333,8 @@ public class DorfManager : MonoBehaviour
         }
         DorfManager.DorfTaskInProgress newTask;
         Building close = closestStorageBuilding(targetDorf.transform.position, targetDorf.heldResources[0].type, targetDorf.heldResources[0].value, true);
-        Debug.Log("Depositing in closest storage Building" + close.name);
 
+        if (close == null) { return; }
         newTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL, close.transform.position, close);
         newTask = newTask.setMaxDorves(newTask, 1).setResult(newTask, () =>
         {
@@ -296,7 +343,6 @@ public class DorfManager : MonoBehaviour
                 Debug.Log("Something went wrong - no resources to deposit");
                 return;
             }
-            Debug.Log("Depositing...");
             foreach (Building.StorageSlot s in newTask.targetBuilding.storage)
             {
                 if (s.type == targetDorf.heldResources[0].type)
@@ -781,25 +827,58 @@ public class DorfManager : MonoBehaviour
         DorfManager.DorfTaskInProgress thisTask;
         if (comfortable)
         {
-            thisTask = new DorfManager.DorfTaskInProgress((hungry.currentHaul / hungry.carryingCapacity) * 2.0f, DorfTask.EAT,
-            () => { },
-            home.gameObject.transform.position, home.parentHex);
-            thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
+            if (home == null)
             {
-                Dorf currentDorf = hungry;
-                foreach (WorldResource r in hungry.heldResources)
+                thisTask = new DorfManager.DorfTaskInProgress((hungry.currentHaul / hungry.carryingCapacity) * 2.0f, DorfTask.EAT,
+                () => { },
+                hungry.gameObject.transform.position, HexManager.instance.closestHexToLoc(hungry.gameObject.transform.position));
+                thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
                 {
-                    hungry.currentFood += r.value;
-                    ResourceManager.instance.toBeDestroyed.Add(r);
-                    ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
-                    hungry.fullness = 0.0f;
-                    clutter.Remove(r);
-                }
-                dropAllResources(hungry);
-                UIManager.instance.updateCounterDisplay();
-            });
-            assignDorfToTask(hungry, thisTask);
-            DorfManager.instance.taskQueue.Add(thisTask);
+                    Dorf currentDorf = hungry;
+                    float manureValue = 0;
+                    foreach (WorldResource r in hungry.heldResources)
+                    {
+                        hungry.currentFood += r.value;
+                        manureValue += r.value;
+                        ResourceManager.instance.toBeDestroyed.Add(r);
+                        ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
+                        hungry.fullness = 0.0f;
+                        clutter.Remove(r);
+                    }
+                    dropAllResources(hungry);
+                    ResourceManager.instance.createNewWorldResource(thisTask.target, ResourceManager.ResourceType.MANURE, hungry.gameObject.transform.position, 0.05f);
+                    ResourceManager.instance.addResource(ResourceManager.ResourceType.MANURE, (int)manureValue, true);
+
+                    UIManager.instance.updateCounterDisplay();
+                });
+            }
+            else
+            {
+                thisTask = new DorfManager.DorfTaskInProgress((hungry.currentHaul / hungry.carryingCapacity) * 2.0f, DorfTask.EAT,
+                () => { },
+                home.gameObject.transform.position, home.parentHex);
+                thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
+                {
+                    Dorf currentDorf = hungry;
+                    float manureValue = 0;
+                    foreach (WorldResource r in hungry.heldResources)
+                    {
+                        hungry.currentFood += r.value;
+                        manureValue += r.value;
+                        ResourceManager.instance.toBeDestroyed.Add(r);
+                        ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
+                        hungry.fullness = 0.0f;
+                        clutter.Remove(r);
+                    }
+                    dropAllResources(hungry);
+                    ResourceManager.instance.createNewWorldResource(thisTask.target, ResourceManager.ResourceType.MANURE, hungry.gameObject.transform.position, 0.05f);
+                    ResourceManager.instance.addResource(ResourceManager.ResourceType.MANURE, (int)manureValue, true);
+
+                    UIManager.instance.updateCounterDisplay();
+                });
+                assignDorfToTask(hungry, thisTask);
+                DorfManager.instance.taskQueue.Add(thisTask);
+            }
         }
         else
         {
@@ -823,6 +902,60 @@ public class DorfManager : MonoBehaviour
             DorfManager.instance.taskQueue.Add(thisTask);
 
         }
+
+    }
+
+    public bool reproduce(Dorf primary, Dorf secondary)
+    {
+        Building targetBuilding = primary.home != null ? primary.home : secondary.home != null ? secondary.home : null;
+        DorfManager.DorfTaskInProgress thisTask;
+        Vector2 randcircle = UnityEngine.Random.insideUnitCircle.normalized * 0.2f;
+
+        if (targetBuilding == null) { return false; }
+
+        if (targetBuilding.isBig)
+        {
+            thisTask = new DorfManager.DorfTaskInProgress(10.0f, DorfTask.REPRODUCE,
+            () => { },
+            targetBuilding.gameObject.transform.position + (Vector3)randcircle, targetBuilding.parentHex);
+            thisTask = thisTask.setMaxDorves(thisTask, 2).setResult(thisTask, () =>
+            {
+                GameObject newDorf = Instantiate(DorfRef, targetBuilding.gameObject.transform.position, Quaternion.identity);
+                Dorf newDorfScript = newDorf.GetComponent<Dorf>();
+                newDorfScript.init();
+                foreach (Dorf d in thisTask.wereAssigned)
+                {
+                    d.horniness = 0.0f;
+                }
+            });
+        }
+        else
+        {
+            SegmentBuilding seg = targetBuilding as SegmentBuilding;
+            thisTask = new DorfManager.DorfTaskInProgress(10.0f, DorfTask.REPRODUCE,
+            () => { },
+            seg.gameObject.transform.position + (Vector3)randcircle, seg.parentSegment);
+            thisTask = thisTask.setMaxDorves(thisTask, 2).setResult(thisTask, () =>
+            {
+                GameObject newDorf = Instantiate(DorfRef, targetBuilding.gameObject.transform.position, Quaternion.identity);
+                Dorf newDorfScript = newDorf.GetComponent<Dorf>();
+                newDorfScript.init();
+                foreach (Dorf d in thisTask.wereAssigned)
+                {
+                    d.horniness = 0.0f;
+                }
+                primary.spouse = secondary;
+                secondary.spouse = primary;
+            });
+        }
+        assignDorfToTask(primary, thisTask);
+
+        thisTask.taskLocations.Clear();
+        thisTask.taskLocations.Add(targetBuilding.gameObject.transform.position - (Vector3)randcircle);
+
+        assignDorfToTask(secondary, thisTask);
+        DorfManager.instance.taskQueue.Add(thisTask);
+        return true;
 
     }
 
@@ -861,6 +994,11 @@ public class DorfManager : MonoBehaviour
 
     void assignDorfToTask(Dorf d, DorfTaskInProgress task)
     {
+        if (task.assignedDorves.Count == 0)
+        {
+            task.start();
+        }
+
         d.taskInProgress = task;
         d.currentTask = task.type;
         task.assignedDorves.Add(d);
@@ -868,6 +1006,7 @@ public class DorfManager : MonoBehaviour
         d.addWaypoints(randomTargetLoc, task.target);
         d.currentTaskTargetPos = randomTargetLoc;
         d.currentState = Dorf.DorfState.WALKING;
+
     }
 
     public class DorfTaskInProgress
@@ -903,9 +1042,7 @@ public class DorfManager : MonoBehaviour
             result = value;
             taskLocations.AddRange(locations);
             target = targetHex;
-            this.taskBarCanvas = targetHex.taskbarCanvas;
-            this.progressBar = targetHex.progressBar;
-            maxTaskBarWidth = 5;
+            setTaskBar(true);
         }
         public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, List<Vector2> locations, Segment targetSegment)
         {
@@ -915,9 +1052,7 @@ public class DorfManager : MonoBehaviour
             taskLocations.AddRange(locations);
             this.targetSegment = targetSegment;
             target = targetSegment.parentHex;
-            this.taskBarCanvas = targetSegment.taskbarCanvas;
-            this.progressBar = targetSegment.progressBar;
-            maxTaskBarWidth = 2;
+            setTaskBar(false);
         }
         public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, Vector2 location, Segment targetSegment)
         {
@@ -927,9 +1062,7 @@ public class DorfManager : MonoBehaviour
             taskLocations.Add(location);
             this.targetSegment = targetSegment;
             target = targetSegment.parentHex;
-            this.taskBarCanvas = targetSegment.taskbarCanvas;
-            this.progressBar = targetSegment.progressBar;
-            maxTaskBarWidth = 2;
+            setTaskBar(false);
         }
 
         public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, Vector2 location, Hex targetHex)
@@ -939,10 +1072,7 @@ public class DorfManager : MonoBehaviour
             result = value;
             taskLocations.Add(location);
             target = targetHex;
-            this.taskBarCanvas = targetHex.taskbarCanvas;
-            this.progressBar = targetHex.progressBar;
-            maxTaskBarWidth = 5;
-
+            setTaskBar(true);
         }
 
         public DorfTaskInProgress(DorfTask type, Vector2 location, Building targetBuilding, int slot)
@@ -953,19 +1083,7 @@ public class DorfManager : MonoBehaviour
             this.targetBuilding = targetBuilding;
             this.targetBuildingSlot = slot;
             target = targetBuilding.parentHex;
-            if (targetBuilding.isBig)
-            {
-                this.taskBarCanvas = targetBuilding.parentHex.taskbarCanvas;
-                this.progressBar = targetBuilding.parentHex.progressBar;
-                maxTaskBarWidth = 5;
-            }
-            else
-            {
-                SegmentBuilding thisBuilding = (SegmentBuilding)targetBuilding;
-                this.taskBarCanvas = thisBuilding.parentSegment.taskbarCanvas;
-                this.progressBar = thisBuilding.parentSegment.progressBar;
-                maxTaskBarWidth = 2;
-            }
+            setTaskBar(targetBuilding.isBig);
         }
 
         public DorfTaskInProgress(float timeToComplete, DorfTask type, Vector2 location, Building targetBuilding)
@@ -975,19 +1093,12 @@ public class DorfManager : MonoBehaviour
             this.timeForTask = timeToComplete;
             taskLocations.Add(location);
             this.target = targetBuilding.parentHex;
-            if (targetBuilding.isBig)
+            if (!targetBuilding.isBig)
             {
-                this.taskBarCanvas = targetBuilding.parentHex.taskbarCanvas;
-                this.progressBar = targetBuilding.parentHex.progressBar;
-                maxTaskBarWidth = 5;
+                SegmentBuilding seg = (SegmentBuilding)targetBuilding;
+                targetSegment = seg.parentSegment;
             }
-            else
-            {
-                SegmentBuilding thisBuilding = (SegmentBuilding)targetBuilding;
-                this.taskBarCanvas = thisBuilding.parentSegment.taskbarCanvas;
-                this.progressBar = thisBuilding.parentSegment.progressBar;
-                maxTaskBarWidth = 2;
-            }
+            setTaskBar(targetBuilding.isBig);
         }
 
         public DorfTaskInProgress setMaxDorves(DorfTaskInProgress task, int maxDorves)
@@ -1011,6 +1122,23 @@ public class DorfManager : MonoBehaviour
         {
             storageBuilding = build;
             return task;
+        }
+
+        public void setTaskBar(bool isBig)
+        {
+            if (isBig)
+            {
+                taskBarCanvas = target.taskbarCanvas;
+                progressBar = target.progressBar;
+                maxTaskBarWidth = 5;
+            }
+            else
+            {
+                taskBarCanvas = targetSegment.taskbarCanvas;
+                progressBar = targetSegment.progressBar;
+                maxTaskBarWidth = 2;
+            }
+
         }
 
         public void start()

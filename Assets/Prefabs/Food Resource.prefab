@@ -45,9 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da6d03cf3018475438bb642cf6912dcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: Food
+  type: 0
   weight: 1
-  value: 1
+  value: 2
   icon: {fileID: 0}
   thisHex: {fileID: 0}
   toBePickedUp: 0

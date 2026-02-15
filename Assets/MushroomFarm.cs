@@ -111,7 +111,7 @@ public class MushroomFarm : SegmentBuilding
     {
         DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(3.0f, DorfTask.HARVEST,
         () => {
-            ResourceManager.instance.addResource(ResourceManager.ResourceType.FOOD, mushrooms, true);
+            ResourceManager.instance.addResource(ResourceManager.ResourceType.FOOD, (int)ResourceManager.instance.getResource(ResourceManager.ResourceType.FOOD).obj.GetComponent<WorldResource>().value * mushrooms, true);
             for (int i = 0; i < mushrooms; i++)
             {
                 ResourceManager.instance.createNewWorldResource(parentHex, ResourceManager.ResourceType.FOOD, this.gameObject.transform.position, 0.1f);

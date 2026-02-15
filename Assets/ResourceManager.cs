@@ -14,10 +14,12 @@ public class ResourceManager : MonoBehaviour
     public int Housing = 0;
     public int Rocks = 0;
     public int RockDust = 0;
+    public int Manure = 0;
 
     public int FoodClutter = 0;
     public int RockClutter = 0;
     public int RockDustClutter = 0;
+    public int ManureClutter = 0;
 
     public List<Resource> resourceRefs = new List<Resource>();
     public List<WorldResource> toBeDestroyed = new List<WorldResource>();
@@ -35,7 +37,8 @@ public class ResourceManager : MonoBehaviour
     {
         FOOD,
         ROCKS,
-        ROCKDUST
+        ROCKDUST,
+        MANURE
     }
 
     private void Update()
@@ -70,6 +73,11 @@ public class ResourceManager : MonoBehaviour
                 RockDust += amount;
                 RockDustClutter += isClutter ? amount : 0;
                 break;
+            case ResourceType.MANURE:
+                Manure += amount;
+                ManureClutter += isClutter ? amount : 0;
+                break;
+
         }
     }
 
@@ -86,6 +94,10 @@ public class ResourceManager : MonoBehaviour
             case ResourceType.ROCKDUST:
                 RockDustClutter -= amount;
                 break;
+            case ResourceType.MANURE:
+                ManureClutter -= amount;
+                break;
+
         }
     }
 
@@ -104,6 +116,10 @@ public class ResourceManager : MonoBehaviour
             case ResourceManager.ResourceType.ROCKDUST:
                 RockDust -= amount;
                 RockDustClutter -= isClutter ? amount : 0;
+                break;
+            case ResourceManager.ResourceType.MANURE:
+                Manure -= amount;
+                ManureClutter -= isClutter ? amount : 0;
                 break;
         }
     }
@@ -125,6 +141,18 @@ public class ResourceManager : MonoBehaviour
         wRes.setHex(targetHex);
         DorfManager.instance.clutter.Add(wRes);
         return wRes;
+    }
+
+    public Resource getResource(ResourceType type)
+    {
+        foreach (Resource r in ResourceManager.instance.resourceRefs)
+        {
+            if (r.name == type)
+            {
+                return r;
+            }
+        }
+        return null;
     }
 
     [Serializable]

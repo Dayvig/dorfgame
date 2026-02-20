@@ -57,71 +57,38 @@ public class ResourceManager : MonoBehaviour
         toBeDestroyed.Clear();
     }
 
-    public void addResource(ResourceType type, int amount, bool isClutter)
+    public ref int getValidResourceCounter(ResourceType type, bool isClutter)
     {
         switch (type)
         {
             case ResourceType.FOOD:
-                Food += amount;
-                FoodClutter += isClutter ? amount : 0;
-                break;
+                if (isClutter) { return ref Food; } else { return ref FoodClutter; }
             case ResourceType.ROCKS:
-                Rocks += amount;
-                RockClutter += isClutter ? amount : 0;
-                break;
+                if (isClutter) { return ref Rocks; } else { return ref RockDustClutter; }
             case ResourceType.ROCKDUST:
-                RockDust += amount;
-                RockDustClutter += isClutter ? amount : 0;
-                break;
+                if (isClutter){return ref RockDust;} else {return ref RockDustClutter;}
             case ResourceType.MANURE:
-                Manure += amount;
-                ManureClutter += isClutter ? amount : 0;
-                break;
-
+                if (isClutter) { return ref Manure; } else { return ref ManureClutter; }
         }
+        Debug.Log("Attempted to get a resource which doesn't exist");
+        return ref Food;
     }
 
-    public void stowResource(ResourceType res, int amount)
+    public void addResource(ResourceType type, int amount, bool isClutter)
     {
-        switch (res)
-        {
-            case ResourceType.FOOD:
-                FoodClutter -= amount;
-                break;
-            case ResourceType.ROCKS:
-                RockClutter -= amount;
-                break;
-            case ResourceType.ROCKDUST:
-                RockDustClutter -= amount;
-                break;
-            case ResourceType.MANURE:
-                ManureClutter -= amount;
-                break;
-
-        }
+        getValidResourceCounter(type, false) += amount;
+        getValidResourceCounter(type, true) += isClutter ? amount : 0;
     }
 
-    public void consumeResource(ResourceManager.ResourceType res, int amount, bool isClutter)
+    public void stowResource(ResourceType type, int amount)
     {
-        switch (res)
-        {
-            case ResourceManager.ResourceType.FOOD:
-                Food -= amount;
-                FoodClutter -= isClutter ? amount : 0;
-                break;
-            case ResourceManager.ResourceType.ROCKS:
-                Rocks -= amount;
-                RockClutter -= isClutter ? amount : 0;
-                break;
-            case ResourceManager.ResourceType.ROCKDUST:
-                RockDust -= amount;
-                RockDustClutter -= isClutter ? amount : 0;
-                break;
-            case ResourceManager.ResourceType.MANURE:
-                Manure -= amount;
-                ManureClutter -= isClutter ? amount : 0;
-                break;
-        }
+        getValidResourceCounter(type, true) -= amount;
+    }
+
+    public void consumeResource(ResourceManager.ResourceType type, int amount, bool isClutter)
+    {
+        getValidResourceCounter(type, false) -= amount;
+        getValidResourceCounter(type, true) -= isClutter ? amount : 0;
     }
 
     public WorldResource createNewWorldResource(Hex targetHex, ResourceManager.ResourceType resource, Vector2 center, float range)
@@ -129,7 +96,7 @@ public class ResourceManager : MonoBehaviour
         Resource target = null;
         foreach (Resource r in ResourceManager.instance.resourceRefs)
         {
-            if (r.name == resource)
+            if (r.type.Equals(resource))
             {
                 target = r;
                 break;
@@ -147,7 +114,7 @@ public class ResourceManager : MonoBehaviour
     {
         foreach (Resource r in ResourceManager.instance.resourceRefs)
         {
-            if (r.name == type)
+            if (r.type == type)
             {
                 return r;
             }
@@ -159,6 +126,6 @@ public class ResourceManager : MonoBehaviour
     public class Resource {
 
         public GameObject obj;
-        public ResourceManager.ResourceType name;
+        public ResourceManager.ResourceType type;
     }
 }

@@ -46,7 +46,7 @@ public class Hex : MonoBehaviour
     void Awake()
     {
         NavigationPoints.Add("Eastern Navpoint", new HexTileCoordinate(new Vector2(0.7f, 0f), this));
-        NavigationPoints.Add("Western Navpoint", new HexTileCoordinate(new Vector2(0.7f, 0f), this));
+        NavigationPoints.Add("Western Navpoint", new HexTileCoordinate(new Vector2(-0.7f, 0f), this));
         NavigationPoints.Add("Center", new HexTileCoordinate(new Vector2(0f, 0f), this));
 
         NavigationPoints.Add("Top", new HexTileCoordinate (new Vector2(0f, 0.875f), 1, this));

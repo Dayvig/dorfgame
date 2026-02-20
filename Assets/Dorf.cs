@@ -36,9 +36,15 @@ public class Dorf : MonoBehaviour
         IDLE   
     }
 
+    public enum DorfModifier
+    {
+        STARVING
+    }
+
     public DorfTask currentTask = DorfTask.NONE;
     public Vector2 currentTaskTargetPos;
     public DorfState currentState = DorfState.IDLE;
+    public List<DorfModifier> modifiers = new List<DorfModifier>();
 
     public float workRate = 1.0f;
 
@@ -50,7 +56,7 @@ public class Dorf : MonoBehaviour
 
     public Dorf spouse;
 
-    public float starvationOdds = 5f;
+    public float starvationOdds = 0.5f;
     public float baseStarvationOdds = 0.5f;
     public float starvationFlashTimer = 0.0f;
     public float starvationFlashInterval = 1.0f;
@@ -69,8 +75,7 @@ public class Dorf : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        bool starving = currentFood / maxFood <= 0.25f;
-        if (starving)
+        if (modifiers.Contains(DorfModifier.STARVING))
         {
             flashRen.gameObject.SetActive(true);
             starvationFlashInterval = (currentFood / maxFood) * 10f;
@@ -120,7 +125,7 @@ public class Dorf : MonoBehaviour
                 waypoints.RemoveAt(0);
             }
         }
-        if (taskInProgress != null && Vector2.Distance(transform.position, currentTaskTargetPos) < 0.1f)
+        if (taskInProgress != null && (Vector2.Distance(transform.position, currentTaskTargetPos) < 0.1f || taskInProgress.doesNotRequireLocation))
         {
             currentState = DorfState.PERFORMINGTASK;
         }
@@ -132,9 +137,14 @@ public class Dorf : MonoBehaviour
 
     public void addWaypoints(Vector2 target, Hex endpointHex)
     {
-        HexTileCoordinate closestToStart = HexManager.instance.closestCoordinateToLoc(transform.position, endpointHex, false);
-        HexTileCoordinate closestToEnd = HexManager.instance.closestCoordinateToLoc(target, endpointHex, false);
-        waypoints.AddRange(HexManager.instance.pathFromPointToPoint(closestToStart, closestToEnd));
-        waypoints.Add(target);
+        if (endpointHex == HexManager.instance.closestHexToLoc(transform.position))
+        {
+            waypoints.Add(target);
+        }
+        else
+        {
+            waypoints.AddRange(HexManager.instance.pathFromPointToPoint(transform.position, target, HexManager.instance.closestHexToLoc(transform.position), endpointHex));
+            waypoints.Add(target);
+        }
     }
 }

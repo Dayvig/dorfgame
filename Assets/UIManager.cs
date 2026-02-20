@@ -23,10 +23,12 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI housingCounter;
     public TextMeshProUGUI rocksCounter;
     public TextMeshProUGUI rockDustCounter;
+    public TextMeshProUGUI manureCounter;
 
     public TextMeshProUGUI foodClutterCounter;
     public TextMeshProUGUI rocksClutterCounter;
     public TextMeshProUGUI rockDustClutterCounter;
+    public TextMeshProUGUI manureClutterCounter;
 
     public List<TextMeshProUGUI> buildingCostTexts = new List<TextMeshProUGUI>();
     public List<Building> allBuildings = new List<Building>();
@@ -71,9 +73,11 @@ public class UIManager : MonoBehaviour
         housingCounter.text = "0 / " + ResourceManager.instance.Housing;
         rocksCounter.text = "" + ResourceManager.instance.Rocks;
         rockDustCounter.text = "" + ResourceManager.instance.RockDust;
+        manureCounter.text = "" + ResourceManager.instance.Manure;
 
         foodClutterCounter.text = "" + ResourceManager.instance.FoodClutter;
         rocksClutterCounter.text = "" + ResourceManager.instance.RockClutter;
+        manureClutterCounter.text = "" + ResourceManager.instance.ManureClutter;
         //rockDustClutterCounter.text = "" + ResourceManager.instance.RockDustClutter;
 
     }

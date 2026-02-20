@@ -102,7 +102,7 @@ public class HexManager : MonoBehaviour
 
             foreach (Hex hex in currentHex.neighbors)
             {
-                if (hex == null || closedList.Contains(hex)) { continue; }
+                if (hex == null || closedList.Contains(hex) || hex.hasFeature("Stone")) { continue; }
 
                 hex.g = currentHex.g + Vector3.Distance(hex.gameObject.transform.position, currentHex.gameObject.transform.position);
                 hex.h = Vector3.Distance(hex.transform.position, end.transform.position);
@@ -162,6 +162,11 @@ public class HexManager : MonoBehaviour
                         break;
                     case (8, 10):
                         break;
+                    case (8, 9):
+                        break;
+                    case (9,9):
+                        break;
+
                     default:
                         hexScript.setFeature(getFeatureByName("Stone"));
                         break;
@@ -262,96 +267,79 @@ public class HexManager : MonoBehaviour
 
         }
     }
-    public List<Vector2> pathFromPointToPoint(HexTileCoordinate start, HexTileCoordinate end) {
+    public List<Vector2> pathFromPointToPoint(Vector2 startPos, Vector2 endPos, Hex startHex, Hex endHex) {
 
         List<Vector2> path = new List<Vector2>();
         HexTileCoordinate nextCoord = null;
 
-        //If in same hex
-        if (start.parentHex == end.parentHex)
+        HexTileCoordinate start = closestCoordinateToLoc(endPos, startHex, true);
+        HexTileCoordinate end = closestCoordinateToLoc(endPos, endHex, false);
+
+
+        //If not in same hex
+        if (start.parentHex != end.parentHex)
         {
-            //If on an edge
-            if (start.edgeId != -99 && end.edgeId != -99)
-            {
-                //If within 3 edge points
-                if (Mathf.Abs(end.edgeId - start.edgeId) <= 3 || Mathf.Abs(end.edgeId - (start.edgeId + 13)) <= 3)
-                {
-                    //find closest corner
-                    nextCoord = closestCornerCoordinateToLoc(start.absoluteLoc(), end.absoluteLoc(), start.parentHex);
-
-                    //go to corner, then destination
-                    path.Add(nextCoord.absoluteLoc());
-                    path.Add(end.absoluteLoc());
-                }
-                else
-                {
-                    //if on corner or corner edge, add nav pair
-                    if ((start.edgeId != -99) &&
-                        !((start.edgeId - 1) % 3 == 0))
-                    {
-                        path.Add(start.navPair.absoluteLoc());
-                    }
-                    //then move to center
-                    path.Add(start.parentHex.NavigationPoints.GetValueOrDefault("Center").absoluteLoc());
-
-                    //if destination is on corner or corner edge, add its nav pair
-                    if (end.edgeId != -99 &&
-                        !((end.edgeId - 1) % 3 == 0))
-                    {
-                        path.Add(end.navPair.absoluteLoc());
-                    }
-
-                    //move to destination
-                    path.Add(end.absoluteLoc());
-                }
-            }
-            else
-            {
-                //if not on edge, simply go to destination
-                path.Add(end.absoluteLoc());
-            }
-
-            return path;
-        }
-
-        //if in different hex
-        else
-        {
-            Debug.Log("Different Hex iter");
-
             hexPath.Clear();
             hexPath = FindPathAStar(start.parentHex, end.parentHex);
-            Debug.Log("pathctr:" + hexPath.Count);
 
             HexTileCoordinate cursorCoord = start;
-            HexTileCoordinate tmp = null;
 
-            for (int i = hexPath.Count-1; i >= 0; i--)
+            for (int i = hexPath.Count - 1; i > 0; i--)
             {
-                //find closest point in next hex
-                nextCoord = closestCoordinateToLoc(cursorCoord.absoluteLoc(), hexPath[i].parentHex.transform.position, hexPath[i], true);
+                Debug.Log(hexPath[i]);
+                path.Add(cursorCoord.absoluteLoc());
 
-                //find closest coordinate in this hex's id that corrosponds to that hex (should be the same point in space)
-                tmp = closestCoordinateToLoc(nextCoord.absoluteLoc(), cursorCoord.parentHex, true);
+                //find closest point to end in this hex
+                nextCoord = closestCoordinateToLoc(cursorCoord.absoluteLoc(), endPos, hexPath[i], true);
 
-                if (tmp.parentHex != nextCoord.parentHex)
+                //translate cursor coord to match current checking hex
+                cursorCoord = closestCoordinateToLoc(cursorCoord.absoluteLoc(), hexPath[i], false);
+
+                //If on an edge
+                if (cursorCoord.edgeId != -99 && nextCoord.edgeId != -99)
                 {
-                    Debug.Log("Point in Hex A not same as point in Hex B");
-                }
+                    //If within 3 edge points
+                    if (Mathf.Abs(nextCoord.edgeId - cursorCoord.edgeId) <= 3 || Mathf.Abs(nextCoord.edgeId - (cursorCoord.edgeId + 13)) <= 3)
+                    {
+                        //find closest corner
+                        HexTileCoordinate nextCornerCoord = closestCornerCoordinateToLoc(cursorCoord.absoluteLoc(), nextCoord.absoluteLoc(), cursorCoord.parentHex);
 
-                //run recursively to get inter-hex path
-                path.AddRange(pathFromPointToPoint(cursorCoord, tmp));
+                        //go to corner, then destination
+                        path.Add(nextCornerCoord.absoluteLoc());
+                        path.Add(nextCoord.absoluteLoc());
+                    }
+                    else
+                    {
+                        //if on corner or corner edge, add nav pair
+                        if ((cursorCoord.edgeId != -99) &&
+                            !((cursorCoord.edgeId - 1) % 3 == 0))
+                        {
+                            path.Add(cursorCoord.navPair.absoluteLoc());
+                        }
+                        //then move to center
+                        path.Add(cursorCoord.parentHex.NavigationPoints.GetValueOrDefault("Center").absoluteLoc());
+
+                        //if dest on corner or corner edge, add nav pair
+                        if ((nextCoord.edgeId != -99) &&
+                        !((nextCoord.edgeId - 1) % 3 == 0))
+                        {
+                            path.Add(nextCoord.navPair.absoluteLoc());
+                        }
+
+                        //add next edge
+                        path.Add(nextCoord.absoluteLoc());
+                    }
+                }
 
                 //update cursor
                 cursorCoord = nextCoord;
             }
-            //if in final hex, navigate recursively to point and return
-            if (cursorCoord.parentHex == end.parentHex)
-            {
-                path.AddRange(pathFromPointToPoint(cursorCoord, end));
-            }
-            return path;
         }
+
+        //add the end pos
+        path.Add(endPos);
+
+        return path;
     }
     HexTileCoordinate closestCoordinateToLoc(Vector2 currentPos, Vector2 dest, Hex toCheck, bool edgesOnly)
     {
@@ -362,7 +350,7 @@ public class HexManager : MonoBehaviour
         {
             if (h.edgeId == -99 && edgesOnly) { continue; }
 
-            float dist = (Vector2.Distance(currentPos, h.absoluteLoc()) + Vector2.Distance(dest, h.absoluteLoc()));
+            float dist = Vector2.Distance(dest, h.absoluteLoc());
 
             if (least == -1 || dist < least)
             {

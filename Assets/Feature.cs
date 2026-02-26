@@ -10,10 +10,23 @@ public class Feature : MonoBehaviour
     public Hex parentHex;
     public List<Feature> toRemove = new List<Feature>();
 
+    public enum featureType
+    {
+        STONE,
+        RIVER
+    }
+
+    public featureType type;
+
     public virtual void activate()
     {
         active = true;
         parentHex.activeFeatures.Add(this);
+    }
+
+    public virtual void reactivate()
+    {
+        active = true;
     }
 
     public virtual void remove()

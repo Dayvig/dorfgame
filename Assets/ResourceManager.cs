@@ -62,13 +62,13 @@ public class ResourceManager : MonoBehaviour
         switch (type)
         {
             case ResourceType.FOOD:
-                if (isClutter) { return ref Food; } else { return ref FoodClutter; }
+                if (isClutter) { return ref FoodClutter; } else { return ref Food; }
             case ResourceType.ROCKS:
-                if (isClutter) { return ref Rocks; } else { return ref RockDustClutter; }
+                if (isClutter) { return ref RockClutter; } else { return ref Rocks; }
             case ResourceType.ROCKDUST:
-                if (isClutter){return ref RockDust;} else {return ref RockDustClutter;}
+                if (isClutter){return ref RockDustClutter; } else {return ref RockDust;}
             case ResourceType.MANURE:
-                if (isClutter) { return ref Manure; } else { return ref ManureClutter; }
+                if (isClutter) { return ref ManureClutter; } else { return ref Manure; }
         }
         Debug.Log("Attempted to get a resource which doesn't exist");
         return ref Food;
@@ -78,6 +78,12 @@ public class ResourceManager : MonoBehaviour
     {
         getValidResourceCounter(type, false) += amount;
         getValidResourceCounter(type, true) += isClutter ? amount : 0;
+    }
+
+    public void stowResource(ResourceType type, int amount, Building.StorageSlot slot)
+    {
+        getValidResourceCounter(type, true) -= amount;
+        slot.occupiedStorage += amount;
     }
 
     public void stowResource(ResourceType type, int amount)
@@ -91,7 +97,7 @@ public class ResourceManager : MonoBehaviour
         getValidResourceCounter(type, true) -= isClutter ? amount : 0;
     }
 
-    public WorldResource createNewWorldResource(Hex targetHex, ResourceManager.ResourceType resource, Vector2 center, float range)
+    public WorldResource createNewWorldResource(Hex targetHex, ResourceManager.ResourceType resource, Vector2 center, float range, bool isClutter)
     {
         Resource target = null;
         foreach (Resource r in ResourceManager.instance.resourceRefs)
@@ -106,7 +112,11 @@ public class ResourceManager : MonoBehaviour
         GameObject newRes = Instantiate(target.obj, ((Vector3)center + (Vector3)(UnityEngine.Random.insideUnitCircle * range)), Quaternion.identity);
         WorldResource wRes = newRes.GetComponent<WorldResource>();
         wRes.setHex(targetHex);
-        DorfManager.instance.clutter.Add(wRes);
+        wRes.isClutter = isClutter;
+        if (isClutter)
+        {
+            DorfManager.instance.clutter.Add(wRes);
+        }
         return wRes;
     }
 

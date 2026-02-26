@@ -298,6 +298,7 @@ void distributeDorves(List<Dorf> available)
 
 void createNewPickupTask(Dorf assignee, WorldResource r)
 {
+    Debug.Log("New Pickup Task Created");
     DorfManager.DorfTaskInProgress thisTask;
 
     if (!hasValidStorageBuilding(r.type, r.value)) { return; }
@@ -308,8 +309,7 @@ void createNewPickupTask(Dorf assignee, WorldResource r)
     thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
     {
         Dorf currentDorf = assignee;
-        currentDorf.heldResources.Add(r);
-        currentDorf.currentHaul += r.weight;
+        currentDorf.pickupWorldResource(r);
         if (currentDorf.currentHaul >= currentDorf.carryingCapacity)
         {
             createNewStorageTask(currentDorf);
@@ -326,6 +326,7 @@ void createNewPickupTask(Dorf assignee, WorldResource r)
                 createNewStorageTask(currentDorf);
             }
         }
+        Debug.Log("Pickup task executed");
     });
     r.toBePickedUp = true;
     assignDorfToTask(assignee, thisTask);
@@ -334,6 +335,8 @@ void createNewPickupTask(Dorf assignee, WorldResource r)
 
 void createNewStorageTask(Dorf targetDorf)
 {
+    Debug.Log("New Storage Task Created");
+
     if (targetDorf.heldResources[0] == null)
     {
         return;
@@ -358,16 +361,12 @@ void createNewStorageTask(Dorf targetDorf)
         {
             if (s.type == targetDorf.heldResources[0].type)
             {
-
                 foreach (WorldResource w in targetDorf.heldResources)
                 {
-                    if (s.occupiedStorage + w.value <= s.maxStorage)
+                    if (targetDorf.storeWorldResource(w, s))
                     {
-                        s.occupiedStorage += w.value;
-                        ResourceManager.instance.stowResource(w.type, (int)w.value);
                         ResourceManager.instance.toBeDestroyed.Add(w);
-                        clutter.Remove(w);
-                    }
+                    };
                 }
             }
         }
@@ -498,7 +497,7 @@ public void gatherFood(Dorf hungry, bool comfortable, Building home)
                 {
                     if (slot.type == ResourceManager.ResourceType.FOOD)
                     {
-                        newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, ResourceManager.ResourceType.FOOD, this.gameObject.transform.position, 1.0f);
+                        newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, ResourceManager.ResourceType.FOOD, this.gameObject.transform.position, 1.0f, false);
                         float valueToWeight = newResource.value / newResource.weight;
                         newResource.weight = hungry.carryingCapacity - hungry.currentHaul;
                         newResource.value = valueToWeight * newResource.weight;
@@ -512,10 +511,7 @@ public void gatherFood(Dorf hungry, bool comfortable, Building home)
                         UIManager.instance.updateCounterDisplay();
                     }
                 }
-                if (newResource != null)
-                {
-                    newResource.toBePickedUp = false;
-                    hungry.heldResources.Add(newResource);
+                if (hungry.pickupWorldResource(newResource)){
                     newEatingTask(hungry, comfortable, home);
                 }
             });
@@ -531,9 +527,7 @@ public void gatherFood(Dorf hungry, bool comfortable, Building home)
         thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
         {
             Dorf currentDorf = hungry;
-            currentDorf.heldResources.Add(r);
-            currentDorf.currentHaul += r.weight;
-            ResourceManager.instance.stowResource(ResourceManager.ResourceType.FOOD, (int)r.value);
+            hungry.pickupWorldResource(r);
             if (comfortable)
             {
                 gatherFood(hungry, comfortable, home);
@@ -560,7 +554,6 @@ public void gatherFood(Dorf hungry, bool comfortable, Building home)
                 }
             }
         });
-        r.toBePickedUp = true;
         assignDorfToTask(hungry, thisTask);
         DorfManager.instance.taskQueue.Add(thisTask);
     }
@@ -644,7 +637,7 @@ public bool gatherBuildingResource(Dorf builder, Building toConstruct)
                     {
                         if (slot.type.Equals(nextResourceType))
                         {
-                            newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, nextResourceType, this.gameObject.transform.position, 1.0f);
+                            newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, nextResourceType, this.gameObject.transform.position, 1.0f, false);
                             float targetValue = 0;
                             foreach (Building.BuildingCost costToCheck in toConstruct.costs)
                             {
@@ -668,14 +661,12 @@ public bool gatherBuildingResource(Dorf builder, Building toConstruct)
                                 newResource.value = slot.occupiedStorage;
                                 newResource.weight = (1 / valueToWeight) * newResource.weight;
                             }
-                            slot.occupiedStorage -= newResource.value;
+
                             UIManager.instance.updateCounterDisplay();
                         }
                     }
-                    if (newResource != null)
+                    if (builder.pickupWorldResource(newResource))
                     {
-                        newResource.toBePickedUp = true;
-                        builder.heldResources.Add(newResource);
                         foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
                         {
                             if (gathered.type == newResource.type)
@@ -707,9 +698,7 @@ public bool gatherBuildingResource(Dorf builder, Building toConstruct)
             {
                 Debug.Log("Resolving");
                 Dorf currentDorf = builder;
-                currentDorf.heldResources.Add(r);
-                currentDorf.currentHaul += r.weight;
-                ResourceManager.instance.stowResource(r.type, (int)r.value);
+                currentDorf.pickupWorldResource(r);
 
                 foreach (Building.BuildingCost gathered in toConstruct.gatheredBuildingResources)
                 {
@@ -738,7 +727,6 @@ public bool gatherBuildingResource(Dorf builder, Building toConstruct)
             }
             else
             {
-                r.toBePickedUp = false;
                 dropAllResources(builder);
             }
         });
@@ -803,7 +791,11 @@ public void constructBuilding(Dorf builder, Building toConstruct)
         foreach (WorldResource r in builder.heldResources)
         {
             ResourceManager.instance.toBeDestroyed.Add(r);
-            clutter.Remove(r);
+            if (r.isClutter)
+            {
+                clutter.Remove(r);
+                ResourceManager.instance.stowResource(r.type, (int)r.value);
+            }
         }
         dropAllResources(builder);
         UIManager.instance.updateCounterDisplay();
@@ -843,11 +835,14 @@ public void constructBuilding(Dorf builder, Building toConstruct)
         foreach (WorldResource r in builder.heldResources)
         {
             ResourceManager.instance.toBeDestroyed.Add(r);
-            clutter.Remove(r);
+            if (r.isClutter)
+            {
+                clutter.Remove(r);
+                ResourceManager.instance.stowResource(r.type, (int)r.value);
+            }
         }
         dropAllResources(builder);
         UIManager.instance.updateCounterDisplay();
-
         gatherBuildingResource(builder, toConstruct);
     }
 }
@@ -909,14 +904,22 @@ public void eatFood(Dorf hungry, DorfTaskInProgress task)
         hungry.currentFood += r.value;
         manureValue += r.value;
         ResourceManager.instance.toBeDestroyed.Add(r);
-        ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, false);
+        ResourceManager.instance.consumeResource(ResourceManager.ResourceType.FOOD, (int)r.value, r.isClutter);
+        if (r.isClutter)
+        {
+            clutter.Remove(r);
+        }
         hungry.fullness = 0.0f;
-        clutter.Remove(r);
     }
     dropAllResources(hungry);
-    ResourceManager.instance.createNewWorldResource(task.target, ResourceManager.ResourceType.MANURE, hungry.gameObject.transform.position, 0.05f);
-    ResourceManager.instance.addResource(ResourceManager.ResourceType.MANURE, (int)manureValue, true);
-
+    while (manureValue > 0)
+    {
+        WorldResource newManure = ResourceManager.instance.createNewWorldResource(task.target, ResourceManager.ResourceType.MANURE, hungry.gameObject.transform.position, 0.3f, true);
+        newManure.value = manureValue > 20 ? 20 : manureValue;
+        newManure.weight = newManure.value / 2;
+        manureValue -= newManure.value;
+        ResourceManager.instance.addResource(ResourceManager.ResourceType.MANURE, (int)newManure.value, true);
+    }
     UIManager.instance.updateCounterDisplay();
 }
 

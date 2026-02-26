@@ -67,6 +67,7 @@ MonoBehaviour:
     type: 0
   isBig: 0
   constructionTime: 0
+  ID: 1
   parentSegment: {fileID: 0}
 --- !u!1 &7063225583792489851
 GameObject:

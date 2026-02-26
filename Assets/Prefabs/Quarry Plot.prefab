@@ -153,6 +153,7 @@ MonoBehaviour:
     type: 2
   isBig: 1
   constructionTime: 0
+  ID: 2
   menuOffsets:
   - {x: -50, y: 150}
   - {x: 50, y: 150}

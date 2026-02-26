@@ -11,6 +11,7 @@ public class WorldResource : MonoBehaviour
     public Hex thisHex;
     public bool toBePickedUp = false;
     public bool stowed = false;
+    public bool isClutter = false;
 
     public WorldResource (ResourceManager.ResourceType type, float weight, float value)
     {

@@ -42,6 +42,14 @@ public class Hex : MonoBehaviour
     public RectTransform progressBar;
     public Canvas taskbarCanvas;
 
+    public bool placementBlocked = false;
+    public bool movementBlocked = false;
+    public bool hasWater = false;
+    public bool hasOriginalSourceWater = false;
+    public SpriteRenderer waterVisual;
+
+    public GameObject hexObjectsRoot;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -85,18 +93,22 @@ public class Hex : MonoBehaviour
     {
         foreach (Feature test in features)
         {
-            if (test.name.Equals(f.name))
+            if (test.type.Equals(f.type))
             {
+                if (f.type.Equals(Feature.featureType.RIVER))
+                {
+                    Debug.Log("Activating feature" + f.name);
+                }
                 test.activate();
             }
         }
     }
 
-    public bool hasFeature(string feature)
+    public bool hasFeature(Feature.featureType feature)
     {
         foreach (Feature test in activeFeatures)
         {
-            if (test.name.Equals(feature))
+            if (test.type.Equals(feature))
             {
                 return true;
             }
@@ -111,7 +123,7 @@ public class Hex : MonoBehaviour
         {
             return;
         }
-        if (activeBigBuildings.Count == 0 && !UIManager.instance.currentTask.Equals(DorfTask.MINE))
+        if (activeBigBuildings.Count == 0 && !UIManager.instance.currentTask.Equals(DorfTask.MINE) && !hasFeature(Feature.featureType.RIVER))
         {
             if (UIManager.instance.currentlySelectedBuilding != null && !UIManager.instance.currentlySelectedBuilding.isBig)
             {
@@ -127,6 +139,7 @@ public class Hex : MonoBehaviour
         tint.gameObject.SetActive(false);
         foreach (Feature f in activeFeatures)
         {
+            Debug.Log("Hovering feature " + f.name);
             f.onHover();
         }
         foreach (Building b in bigBuildings)
@@ -135,7 +148,7 @@ public class Hex : MonoBehaviour
             {
                 break;
             }
-            if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name))
+            if (b.ID.Equals(UIManager.instance.currentlySelectedBuilding.ID))
             {
                 b.plot.SetActive(true);
                 if (!b.isActive)
@@ -240,7 +253,7 @@ public class Hex : MonoBehaviour
         for (int i = 0; i < neighbors.Length; i++)
         {
             Hex current = neighbors[i];
-            if (current != null && !current.hasFeature("Stone")){
+            if (current != null && !current.hasFeature(Feature.featureType.STONE)){
                 switch (i)
                 {
                     case 0:

@@ -147,4 +147,32 @@ public class Dorf : MonoBehaviour
             waypoints.Add(target);
         }
     }
+
+    public bool pickupWorldResource(WorldResource w)
+    {
+        if ((w.weight + currentHaul > carryingCapacity) || w == null)
+        {
+            return false;
+        }
+        w.toBePickedUp = true;
+        heldResources.Add(w);
+        currentHaul += w.weight;
+        return true;
+    }
+
+    public bool storeWorldResource(WorldResource w, Building.StorageSlot slot)
+    {
+        if ((w.weight + slot.occupiedStorage > slot.maxStorage) || w == null)
+        {
+            return false;
+        }
+        slot.occupiedStorage += w.value;
+        if (w.isClutter)
+        {
+            ResourceManager.instance.stowResource(w.type, (int)w.value);
+            w.isClutter = false;
+            DorfManager.instance.clutter.Remove(w);
+        }
+        return true;
+    }
 }

@@ -150,4 +150,7 @@ MonoBehaviour:
   storage: []
   isBig: 0
   constructionTime: 4
+  ID: 3
   parentSegment: {fileID: 0}
+  owners: []
+  capacity: 1

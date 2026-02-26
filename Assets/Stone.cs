@@ -10,21 +10,21 @@ public class Stone : Feature
     public override void activate()
     {
         base.activate();
-        foreach (Segment s in parentHex.segments)
-        {
-            s.occupied = true;
-        }
+        parentHex.placementBlocked = true;
+        parentHex.movementBlocked = true;
         visual.gameObject.SetActive(true);
     }
 
     public override void remove()
     {
-        foreach (Segment s in parentHex.segments)
+        base.remove();
+        parentHex.placementBlocked = false;
+        parentHex.movementBlocked = false;
+        foreach (Feature f in parentHex.activeFeatures)
         {
-            s.occupied = false;
+            f.reactivate();
         }
         visual.gameObject.SetActive(false);
-        base.remove();
     }
 
     public override void onHover()
@@ -58,7 +58,7 @@ public class Stone : Feature
             {
                 foreach (Feature f in h.activeFeatures)
                 {
-                    if (!(f.name.Equals("Stone")))
+                    if (!(f.type.Equals(featureType.STONE)))
                     {
                         canClear = true;
                         break;
@@ -79,9 +79,8 @@ public class Stone : Feature
                     UIManager.instance.updateCounterDisplay();
                     for (int i = 0; i < 10; i++)
                     {
-                        ResourceManager.instance.createNewWorldResource(parentHex, ResourceManager.ResourceType.ROCKS, this.gameObject.transform.position, 1.0f);
+                        ResourceManager.instance.createNewWorldResource(parentHex, ResourceManager.ResourceType.ROCKS, this.gameObject.transform.position, 1.0f, true);
                     }
-
                 }
                 , parentHex.miningPoints(), parentHex);
             DorfManager.instance.allCurrentTasks.Add(thisTask);

@@ -102,7 +102,7 @@ public class HexManager : MonoBehaviour
 
             foreach (Hex hex in currentHex.neighbors)
             {
-                if (hex == null || closedList.Contains(hex) || hex.hasFeature("Stone")) { continue; }
+                if (hex == null || closedList.Contains(hex) || hex.movementBlocked) { continue; }
 
                 hex.g = currentHex.g + Vector3.Distance(hex.gameObject.transform.position, currentHex.gameObject.transform.position);
                 hex.h = Vector3.Distance(hex.transform.position, end.transform.position);
@@ -166,9 +166,11 @@ public class HexManager : MonoBehaviour
                         break;
                     case (9,9):
                         break;
-
+                    case (6, 10):
+                        hexScript.setFeature(getFeatureByType(Feature.featureType.RIVER));
+                        break;
                     default:
-                        hexScript.setFeature(getFeatureByName("Stone"));
+                        hexScript.setFeature(getFeatureByType(Feature.featureType.STONE));
                         break;
                 }
 
@@ -264,7 +266,17 @@ public class HexManager : MonoBehaviour
 
                 }
             }
+        }
+    }
 
+    public void reactivateFeatures(List<Hex> grid)
+    {
+        foreach (Hex h in grid)
+        {
+            foreach (Feature f in h.activeFeatures)
+            {
+                f.reactivate();
+            }
         }
     }
     public List<Vector2> pathFromPointToPoint(Vector2 startPos, Vector2 endPos, Hex startHex, Hex endHex) {
@@ -286,7 +298,6 @@ public class HexManager : MonoBehaviour
 
             for (int i = hexPath.Count - 1; i > 0; i--)
             {
-                Debug.Log(hexPath[i]);
                 path.Add(cursorCoord.absoluteLoc());
 
                 //find closest point to end in this hex
@@ -415,19 +426,19 @@ public class HexManager : MonoBehaviour
         return toReturn;
     }
     public bool canBePlaced(Building b, Segment s)
-    { 
-        return true;
+    {
+        return !s.parentHex.placementBlocked && !s.occupied && b.canBePlaced(s);
     }
     public bool canBePlaced(Building b, Hex h)
     {
-        return h.allSegmentsClear();
+        return !h.placementBlocked && h.allSegmentsClear();
     }
 
-    public Feature getFeatureByName(string s)
+    public Feature getFeatureByType(Feature.featureType type)
     {
         foreach (Feature f in allFeatures)
         {
-            if (f.name.Equals(s))
+            if (f.type.Equals(type))
             {
                 return f;
             }
@@ -456,7 +467,10 @@ public class HexManager : MonoBehaviour
         }
     }
 
-
+    private void Awake()
+    {
+        generateNewGrid = true;
+    }
     void Update()
     {
         if (generateNewGrid)
@@ -469,6 +483,7 @@ public class HexManager : MonoBehaviour
 
             generateHexGrid();
             assignNeighbors(hexes);
+            reactivateFeatures(hexes);
             generateNewGrid = false;
         }
 

@@ -32,6 +32,27 @@ public class Building : MonoBehaviour
         MISC
     }
 
+    public enum BuildingID
+    {
+        MUSHROOMFARM,
+        CELLAR,
+        QUARRY,
+        BASICHOUSE,
+        OUTHOUSE,
+        WELL
+    }
+
+    public BuildingID ID;
+
+    public virtual bool canBePlaced(Hex h)
+    {
+        return true;
+    }
+
+    public virtual bool canBePlaced(Segment s)
+    {
+        return true;
+    }
     public virtual void onPlace() {
         if (storage.Count > 0)
         {
@@ -62,6 +83,15 @@ public class Building : MonoBehaviour
             menuObjects[i].SetActive(false);
         }
         selected = false;
+    }
+
+    public virtual void onHover()
+    {
+
+    }
+    public virtual void onUnHover()
+    {
+
     }
 
     public virtual void onPlotPlaced()

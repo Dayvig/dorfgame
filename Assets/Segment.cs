@@ -15,10 +15,10 @@ public class Segment : MonoBehaviour {
     public RectTransform progressBar;
     public Canvas taskbarCanvas;
 
-
+    public GameObject plotObjectRoot;
     public void OnMouseEnter()
     {
-        if (parentHex.activeBigBuildings.Count != 0 || UIManager.instance.currentTask.Equals(DorfTask.MINE))
+        if (parentHex.activeBigBuildings.Count != 0 || UIManager.instance.currentTask.Equals(DorfTask.MINE) || parentHex.hasFeature(Feature.featureType.RIVER))
         {
             HexManager.instance.changeMode(HexManager.SelectionMode.HEX);
             return;
@@ -30,12 +30,17 @@ public class Segment : MonoBehaviour {
         tint.SetActive(true);
         foreach (Building b in plots)
         {
+            Debug.Log(b.name);
+            Debug.Log(UIManager.instance.currentlySelectedBuilding.ID);
+            Debug.Log(b.ID);
+
             if (UIManager.instance.currentlySelectedBuilding == null || occupied)
             {
                 break;
             }
-            if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name))
+            if (UIManager.instance.currentlySelectedBuilding.ID.Equals(b.ID))
             {
+                Debug.Log("Setting active" + b.plot.name + (b.plot.gameObject.activeSelf == true));
                 b.plot.SetActive(true);
                 if (!b.isActive)
                 {
@@ -44,6 +49,21 @@ public class Segment : MonoBehaviour {
             }
         }
 
+        foreach (Building b in parentHex.activeBuildings)
+        {
+            if (b is SegmentBuilding)
+            {
+                SegmentBuilding s = (SegmentBuilding)b;
+                if (s.parentSegment == this)
+                {
+                    s.onHover();
+                }
+            }
+            else
+            {
+                b.onHover();
+            }
+        }
         HexManager.instance.segmentHovered = this;
     }
 
@@ -76,7 +96,7 @@ public void OnMouseUp()
                     }
                     continue;
                 }
-                if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && HexManager.instance.canBePlaced(b, this))
+                if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && b.canBePlaced(this))
                 {
                     b.parentHex = this.parentHex;
                     if (b is SegmentBuilding){
@@ -104,6 +124,22 @@ public void OnMouseUp()
                 b.plot.SetActive(false);
             }
         }
+        foreach (Building b in parentHex.activeBuildings)
+        {
+            if (b is SegmentBuilding)
+            {
+                SegmentBuilding s = (SegmentBuilding)b;
+                if (s.parentSegment == this)
+                {
+                    s.onUnHover();
+                }
+            }
+            else
+            {
+                b.onUnHover();
+            }
+        }
+
     }
 
 }

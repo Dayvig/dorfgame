@@ -15,31 +15,40 @@ public class BuildingAdderTool : MonoBehaviour
     public void addBuilding()
     {
         Building b = building;
+
+
         if (bigBuilding)
         {
-            prefabHex.bigBuildings.Add(b);
-            Object newBuildingPrefab = PrefabUtility.InstantiatePrefab(buildingObject);
-            GameObject GO = (GameObject)newBuildingPrefab;
-            GO.transform.parent = prefabHex.hexObjectsRoot.transform;
-            GO.transform.localPosition = new Vector3(0f, 0f, 0f);
+            Object GO = PrefabUtility.InstantiatePrefab(buildingObject);
+            GameObject goObj = (GameObject)GO;
+            Building goBuilding = goObj.GetComponent<Building>();
+
+            prefabHex.bigBuildings.Add(goBuilding);
+            goObj.transform.parent = prefabHex.hexObjectsRoot.transform;
+            goObj.transform.localPosition = new Vector3(0f, 0f, 0f);
         }
         else
         {
+
             for (int i = 0; i < prefabHex.segments.Count; i++)
             {
-                prefabHex.segments[i].plots.Add(b);
-                Object newBuildingPrefab = PrefabUtility.InstantiatePrefab(buildingObject);
-                GameObject GO = (GameObject)newBuildingPrefab;
-                GO.transform.parent = prefabHex.segments[i].plotObjectRoot.transform;
-                GO.transform.localPosition = new Vector3(0f, 0f, 0f) + (Vector3)offSets[i];
+                Object GO = PrefabUtility.InstantiatePrefab(buildingObject);
+                GameObject goObj = (GameObject)GO;
+                Building goBuilding = goObj.GetComponent<Building>();
+
+                prefabHex.segments[i].plots.Add(goBuilding);
+
+                goObj.transform.parent = prefabHex.segments[i].plotObjectRoot.transform;
+                goObj.transform.localPosition = new Vector3(0f, 0f, 0f) + (Vector3)offSets[i];
                 if (b is SegmentBuilding)
                 {
                     SegmentBuilding segment = (SegmentBuilding)b;
                     segment.parentSegment = prefabHex.segments[i];
                 }
-                b.parentHex = prefabHex;
             }
         }
+        b.parentHex = prefabHex;
+
         PrefabUtility.ApplyPrefabInstance(hexPrefab, InteractionMode.UserAction);
     }
     public void removeBuilding()

@@ -19,7 +19,8 @@ public class ModelGame : MonoBehaviour
         HAUL,
         EAT,
         REPRODUCE,
-        GATHERFOOD
+        GATHERFOOD,
+        BREW
     }
 
     private void Start()

@@ -65,8 +65,14 @@ MonoBehaviour:
   - maxStorage: 40
     occupiedStorage: 0
     type: 0
+  - maxStorage: 40
+    occupiedStorage: 0
+    type: 4
   isBig: 0
   constructionTime: 0
+  requiresWater: 0
+  running: 0
+  taskSet: 0
   ID: 1
   parentSegment: {fileID: 0}
 --- !u!1 &7063225583792489851
@@ -85,7 +91,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8111175755724256378
 Transform:
   m_ObjectHideFlags: 0

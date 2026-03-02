@@ -119,7 +119,7 @@ public class Dorf : MonoBehaviour
 
         if (waypoints.Count > 0)
         {
-            transform.position = Vector2.MoveTowards(transform.position, waypoints[0], 0.006f);
+            transform.position = Vector2.MoveTowards(transform.position, waypoints[0], 1f * Time.deltaTime);
             if (Vector2.Distance(transform.position, waypoints[0]) < 0.1f)
             {
                 waypoints.RemoveAt(0);

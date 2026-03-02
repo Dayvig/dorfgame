@@ -1,16 +1,7 @@
-using JetBrains.Annotations;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
-using UnityEditor.SceneManagement;
-using UnityEditor.VersionControl;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static ModelGame;
-using static UnityEditor.ObjectChangeEventStream;
-using static UnityEngine.GraphicsBuffer;
 
 public class DorfManager : MonoBehaviour
 {
@@ -225,9 +216,22 @@ void distributeDorves(List<Dorf> available)
                     idleDorves.Remove(d);
                 }
             }
-        }
-        //reproduce
-        for (int i = 0; i < idleDorves.Count; i++)
+
+            //brew beer
+            for (int i = 0; i < idleDorves.Count; i++)
+            {
+                foreach (Building b in ResourceManager.instance.activatableBuildings)
+                {
+                    if (b.canBeActivated())
+                    {
+                      b.activate();
+                    }
+                }
+            }
+
+            }
+            //reproduce
+            for (int i = 0; i < idleDorves.Count; i++)
         {
             Dorf d = idleDorves[i];
             Dorf d2 = null;
@@ -378,7 +382,7 @@ void createNewStorageTask(Dorf targetDorf)
 
 }
 
-Building closestStorageBuilding(Vector2 position, ResourceManager.ResourceType resource, float value, bool dropOff)
+public Building closestStorageBuilding(Vector2 position, ResourceManager.ResourceType resource, float value, bool dropOff)
 {
     Building closest = null;
     float least = -1;
@@ -400,7 +404,7 @@ Building closestStorageBuilding(Vector2 position, ResourceManager.ResourceType r
     return closest;
 }
 
-bool hasValidStorageBuilding(ResourceManager.ResourceType resource, float value)
+public bool hasValidStorageBuilding(ResourceManager.ResourceType resource, float value)
 {
     Building validBuilding = null;
     foreach (Building b in ResourceManager.instance.storageBuildings)
@@ -662,6 +666,8 @@ public bool gatherBuildingResource(Dorf builder, Building toConstruct)
                                 newResource.weight = (1 / valueToWeight) * newResource.weight;
                             }
 
+                            slot.occupiedStorage -= newResource.value;
+
                             UIManager.instance.updateCounterDisplay();
                         }
                     }
@@ -807,6 +813,7 @@ public void constructBuilding(Dorf builder, Building toConstruct)
         {
             if (toConstruct.isActive) { return; }
             toConstruct.onPlace(builder);
+            toConstruct.onPlace();
             toConstruct.parentHex.activeBuildings.Add(toConstruct);
             toConstruct.visual.color = new Color(1f, 1f, 1f, 1f);
             toConstruct.visual.gameObject.SetActive(true);
@@ -1010,7 +1017,7 @@ foreach (Dorf d in dorves)
 
 }
 
-void assignDorfToTask(Dorf d, DorfTaskInProgress task)
+public void assignDorfToTask(Dorf d, DorfTaskInProgress task)
 {
     if (task.assignedDorves.Count == 0)
     {

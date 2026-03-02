@@ -30,17 +30,12 @@ public class Segment : MonoBehaviour {
         tint.SetActive(true);
         foreach (Building b in plots)
         {
-            Debug.Log(b.name);
-            Debug.Log(UIManager.instance.currentlySelectedBuilding.ID);
-            Debug.Log(b.ID);
-
             if (UIManager.instance.currentlySelectedBuilding == null || occupied)
             {
                 break;
             }
             if (UIManager.instance.currentlySelectedBuilding.ID.Equals(b.ID))
             {
-                Debug.Log("Setting active" + b.plot.name + (b.plot.gameObject.activeSelf == true));
                 b.plot.SetActive(true);
                 if (!b.isActive)
                 {
@@ -96,7 +91,7 @@ public void OnMouseUp()
                     }
                     continue;
                 }
-                if (b.name.Equals(UIManager.instance.currentlySelectedBuilding.name) && b.canBePlaced(this))
+                if (b.ID.Equals(UIManager.instance.currentlySelectedBuilding.ID) && b.canBePlaced(this))
                 {
                     b.parentHex = this.parentHex;
                     if (b is SegmentBuilding){

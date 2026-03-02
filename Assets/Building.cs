@@ -24,6 +24,9 @@ public class Building : MonoBehaviour
 
     public bool isBig = false;
     public float constructionTime;
+    public bool requiresWater;
+    public bool running = false;
+    public bool taskSet = false;
 
     public enum BuildingTypes
     {
@@ -39,7 +42,10 @@ public class Building : MonoBehaviour
         QUARRY,
         BASICHOUSE,
         OUTHOUSE,
-        WELL
+        WELL,
+        STONEBREWERY,
+        DEBUGQUARRY,
+        HOPSFARM
     }
 
     public BuildingID ID;
@@ -93,7 +99,14 @@ public class Building : MonoBehaviour
     {
 
     }
+    public virtual bool canBeActivated()
+    {
+        return false;
+    }
+    public virtual void activate()
+    {
 
+    }
     public virtual void onPlotPlaced()
     {
         foreach (BuildingCost cost in costs)

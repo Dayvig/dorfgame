@@ -15,11 +15,15 @@ public class ResourceManager : MonoBehaviour
     public int Rocks = 0;
     public int RockDust = 0;
     public int Manure = 0;
+    public int Beer = 0;
+    public int Hops = 0;
 
     public int FoodClutter = 0;
     public int RockClutter = 0;
     public int RockDustClutter = 0;
     public int ManureClutter = 0;
+    public int BeerClutter = 0;
+    public int HopsClutter = 0;
 
     public List<Resource> resourceRefs = new List<Resource>();
     public List<WorldResource> toBeDestroyed = new List<WorldResource>();
@@ -27,18 +31,20 @@ public class ResourceManager : MonoBehaviour
     public List<Building> harvestableBuildings = new List<Building>();
     public List<Building> storageBuildings = new List<Building>();
     public List<Building> housing = new List<Building>();
+    public List<Building> activatableBuildings = new List<Building>();
 
-    private void Start()
+    private void Awake()
     {
         instance = this;
     }
-
     public enum ResourceType
     {
         FOOD,
         ROCKS,
         ROCKDUST,
-        MANURE
+        MANURE,
+        BEER,
+        HOPS
     }
 
     private void Update()
@@ -69,6 +75,11 @@ public class ResourceManager : MonoBehaviour
                 if (isClutter){return ref RockDustClutter; } else {return ref RockDust;}
             case ResourceType.MANURE:
                 if (isClutter) { return ref ManureClutter; } else { return ref Manure; }
+            case ResourceType.BEER:
+                if (isClutter) { return ref BeerClutter; } else { return ref Beer; }
+            case ResourceType.HOPS:
+                if (isClutter) { return ref HopsClutter; } else { return ref Hops; }
+
         }
         Debug.Log("Attempted to get a resource which doesn't exist");
         return ref Food;

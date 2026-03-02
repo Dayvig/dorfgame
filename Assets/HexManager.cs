@@ -8,6 +8,8 @@ using UnityEngine.Rendering;
 [ExecuteAlways]
 public class HexManager : MonoBehaviour
 {
+    public Building debugStorage;
+
     public List<Hex> hexes = new List<Hex>();
     public GameObject hexObject;
     public GameObject gridCenter;
@@ -25,6 +27,7 @@ public class HexManager : MonoBehaviour
 
     public List<Hex> hexPath= new List<Hex>();
     public List<Feature> allFeatures = new List<Feature>();
+    public List<Building> allBuildings = new List<Building>();
 
     public enum SelectionMode
     {
@@ -39,9 +42,32 @@ public class HexManager : MonoBehaviour
         get; private set;
     }
 
-    private void Start()
+    private void Awake()
     {
         instance = this;
+    }
+
+    private void Start()
+    {
+        initialize();
+    }
+
+    public void initialize()
+    {
+        generateNewGrid = true;
+        if (generateNewGrid)
+        {
+            foreach (Hex h in hexes)
+            {
+                DestroyImmediate(h.gameObject);
+            }
+            hexes.Clear();
+
+            generateHexGrid();
+            assignNeighbors(hexes);
+            reactivateFeatures(hexes);
+            generateNewGrid = false;
+        }
     }
 
     List<Vector2> offsets = new List<Vector2>
@@ -153,7 +179,11 @@ public class HexManager : MonoBehaviour
                 switch (i, k)
                 {
                     case (7, 11):
-                            break;
+                        Building newDebugQuarry = hexScript.getBuilding(getBuildingByType(Building.BuildingID.DEBUGQUARRY), hexScript);
+                        debugStorage = newDebugQuarry;
+                        hexScript.setBuilding(newDebugQuarry, hexScript);
+                        ResourceManager.instance.storageBuildings.Add(newDebugQuarry);
+                        break;
                     case (8, 11):
                         break;
                     case (6, 11):
@@ -169,6 +199,7 @@ public class HexManager : MonoBehaviour
                     case (6, 10):
                         hexScript.setFeature(getFeatureByType(Feature.featureType.RIVER));
                         break;
+
                     default:
                         hexScript.setFeature(getFeatureByType(Feature.featureType.STONE));
                         break;
@@ -445,7 +476,17 @@ public class HexManager : MonoBehaviour
         }
         return null;
     }
-
+    public Building getBuildingByType(Building.BuildingID type)
+    {
+        foreach (Building f in allBuildings)
+        {
+            if (f.ID.Equals(type))
+            {
+                return f;
+            }
+        }
+        return null;
+    }
     public void changeMode(SelectionMode mode)
     {
         HexManager.instance.currentSelectionMode = mode;
@@ -466,28 +507,4 @@ public class HexManager : MonoBehaviour
                 break;
         }
     }
-
-    private void Awake()
-    {
-        generateNewGrid = true;
-    }
-    void Update()
-    {
-        if (generateNewGrid)
-        {
-            foreach (Hex h in hexes)
-            {
-                DestroyImmediate(h.gameObject);
-            }
-            hexes.Clear();
-
-            generateHexGrid();
-            assignNeighbors(hexes);
-            reactivateFeatures(hexes);
-            generateNewGrid = false;
-        }
-
-    }
-
-
 }

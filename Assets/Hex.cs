@@ -1,11 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 using static ModelGame;
 
 public class Hex : MonoBehaviour
@@ -102,6 +98,51 @@ public class Hex : MonoBehaviour
                 test.activate();
             }
         }
+    }
+
+    public void setBuilding(Building b, Hex h)
+    {
+        Building target = null;
+        foreach (Building build in h.bigBuildings)
+        {
+            if (build.ID.Equals(b.ID))
+            {
+                target = build;
+            }
+        }
+        if (target != null)
+        {
+            target.parentHex.activeBuildings.Add(target);
+            target.visual.color = new Color(1f, 1f, 1f, 1f);
+            target.visual.gameObject.SetActive(true);
+            if (target is SegmentBuilding)
+            {
+                SegmentBuilding segmentBuilding = (SegmentBuilding)target;
+                segmentBuilding.parentSegment.occupied = true;
+            }
+            else
+            {
+                target.parentHex.activeBigBuildings.Add(target);
+                foreach (Segment s in target.parentHex.segments)
+                {
+                    s.occupied = true;
+                }
+            }
+            target.isBuilding = false;
+            target.isActive = true;
+
+        }
+    }
+    public Building getBuilding(Building b, Hex h)
+    {
+        foreach (Building build in h.bigBuildings)
+        {
+            if (build.ID.Equals(b.ID))
+            {
+                return build;
+            }
+        }
+        return null;
     }
 
     public bool hasFeature(Feature.featureType feature)

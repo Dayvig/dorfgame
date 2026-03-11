@@ -217,4 +217,6 @@ MonoBehaviour:
   visual: {fileID: 1181559574786512306}
   blockBuildingPlacement: 0
   parentHex: {fileID: 0}
+  toRemove: []
+  type: 0
   taskHover: {fileID: 7365324726676065830}

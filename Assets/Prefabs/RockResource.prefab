@@ -52,6 +52,7 @@ MonoBehaviour:
   thisHex: {fileID: 0}
   toBePickedUp: 0
   stowed: 0
+  isClutter: 0
 --- !u!212 &429950059239009732
 SpriteRenderer:
   m_ObjectHideFlags: 0

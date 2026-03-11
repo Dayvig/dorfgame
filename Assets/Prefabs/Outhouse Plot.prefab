@@ -133,11 +133,9 @@ MonoBehaviour:
   visual: {fileID: 8520653203113992624}
   isActive: 0
   isBuilding: 0
-  costs:
-  - numericalCost: 0
-    type: 1
-    markedAsComplete: 0
+  costs: []
   gatheredBuildingResources: []
+  ResourcesInTransit: []
   selectable: 0
   menuObjects: []
   selected: 0

@@ -1101,6 +1101,7 @@ MonoBehaviour:
     type: 2
     markedAsComplete: 0
   gatheredBuildingResources: []
+  ResourcesInTransit: []
   selectable: 1
   menuObjects:
   - {fileID: 2078431773383120300}
@@ -1116,7 +1117,7 @@ MonoBehaviour:
   parentHex: {fileID: 0}
   storage: []
   isBig: 0
-  constructionTime: 0
+  constructionTime: 5
   requiresWater: 0
   running: 0
   taskSet: 0

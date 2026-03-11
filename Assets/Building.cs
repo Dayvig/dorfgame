@@ -12,6 +12,7 @@ public class Building : MonoBehaviour
     public bool isBuilding = false;
     public List<BuildingCost> costs = new List<BuildingCost>();
     public List<BuildingCost> gatheredBuildingResources = new List<BuildingCost>();
+    public List<WorldResource> ResourcesInTransit = new List<WorldResource>();
 
     public bool selectable = false;
     public List<GameObject> menuObjects = new List<GameObject>();

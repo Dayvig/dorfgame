@@ -138,6 +138,7 @@ MonoBehaviour:
     type: 1
     markedAsComplete: 0
   gatheredBuildingResources: []
+  ResourcesInTransit: []
   selectable: 0
   menuObjects: []
   selected: 0
@@ -150,6 +151,9 @@ MonoBehaviour:
   storage: []
   isBig: 0
   constructionTime: 4
+  requiresWater: 0
+  running: 0
+  taskSet: 0
   ID: 3
   parentSegment: {fileID: 0}
   owners: []

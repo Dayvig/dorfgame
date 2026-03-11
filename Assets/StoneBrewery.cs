@@ -150,7 +150,7 @@ public class StoneBrewery : SegmentBuilding
             thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
             {
 
-            }
+            });
             }
     }
 

@@ -162,7 +162,7 @@ public class Dorf : MonoBehaviour
 
     public bool storeWorldResource(WorldResource w, Building.StorageSlot slot)
     {
-        if ((w.weight + slot.occupiedStorage > slot.maxStorage) || w == null)
+        if ((w.value + slot.occupiedStorage > slot.maxStorage) || w == null)
         {
             return false;
         }

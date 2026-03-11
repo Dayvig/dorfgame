@@ -145,6 +145,7 @@ MonoBehaviour:
   currentTask: 1
   currentTaskTargetPos: {x: 0, y: 0}
   currentState: 2
+  modifiers: 
   workRate: 1
   carryingCapacity: 10
   currentHaul: 0

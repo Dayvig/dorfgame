@@ -52,6 +52,7 @@ MonoBehaviour:
   thisHex: {fileID: 0}
   toBePickedUp: 0
   stowed: 0
+  isClutter: 0
 --- !u!212 &6095823837419049313
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -98,7 +99,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.88, y: 1.77}
+  m_Size: {x: 0.6, y: 0.6}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

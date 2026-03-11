@@ -367,7 +367,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.4, y: 0.6}
+  m_Size: {x: 0.6, y: 0.6}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -500,6 +500,7 @@ MonoBehaviour:
   isBuilding: 0
   costs: []
   gatheredBuildingResources: []
+  ResourcesInTransit: []
   selectable: 1
   menuObjects:
   - {fileID: 6982964040818855717}
@@ -517,17 +518,20 @@ MonoBehaviour:
   constructionTime: 0
   requiresWater: 1
   running: 0
+  taskSet: 0
   ID: 6
   parentSegment: {fileID: 0}
   menuOffsets:
   - {x: 0, y: 150}
   - {x: 0, y: -150}
   tickCtr: 0
-  interval: 1
+  shakeCtr: 0
   brewTime: 20
   brewValue: 0
   alchoholContentInc: 2.5
   rockSlider: {fileID: 559684582388650577}
+  hopsRequired: 0
+  stockedHops: 0
 --- !u!1 &6942469922643045627
 GameObject:
   m_ObjectHideFlags: 0

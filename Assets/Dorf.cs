@@ -29,6 +29,7 @@ public class Dorf : MonoBehaviour
     public DorfManager.DorfTaskInProgress taskInProgress;
 
     public Building home = null;
+    public Building targetBuilding = null;
     public enum DorfState
     {
         WALKING,

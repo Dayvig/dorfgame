@@ -20,7 +20,8 @@ public class ModelGame : MonoBehaviour
         EAT,
         REPRODUCE,
         GATHERFOOD,
-        BREW
+        BREW,
+        WAIT
     }
 
     private void Start()

@@ -2678,6 +2678,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1779341202389645428}
     m_Modifications:
+    - target: {fileID: 337438693984063573, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1340785897731168095, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
       propertyPath: m_Name
       value: HousePlot
@@ -3048,6 +3052,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HousePlot
       objectReference: {fileID: 0}
+    - target: {fileID: 1340785897731168095, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4008441992754874118, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.3
@@ -3089,6 +3097,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7060241871567033610, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
+      propertyPath: plot
+      value: 
+      objectReference: {fileID: 2757668702060942468}
+    - target: {fileID: 7060241871567033610, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
       propertyPath: parentHex
       value: 
       objectReference: {fileID: 8710617636228708927}
@@ -3104,6 +3116,11 @@ PrefabInstance:
 --- !u!4 &1534389811979453399 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4008441992754874118, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
+  m_PrefabInstance: {fileID: 2516359519968838865}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2757668702060942468 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 337438693984063573, guid: d9e9079629aa0be428bd6bd3774b8d73, type: 3}
   m_PrefabInstance: {fileID: 2516359519968838865}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &4832612221202584027 stripped

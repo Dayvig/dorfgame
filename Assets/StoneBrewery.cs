@@ -97,7 +97,7 @@ public class StoneBrewery : SegmentBuilding
 
         if (r == null)
         {
-            Building close = DorfManager.instance.closestStorageBuilding(assignee.transform.position, ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops, false);
+            Building close = DorfManager.instance.closestStorageBuilding(assignee.transform.position, ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops, false, false);
             if (close == null)
             {
                 return;

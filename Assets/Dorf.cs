@@ -156,6 +156,10 @@ public class Dorf : MonoBehaviour
             return false;
         }
         w.toBePickedUp = true;
+        if (resourcesToPickUp.Contains(w))
+        {
+            resourcesToPickUp.Remove(w);
+        }
         heldResources.Add(w);
         currentHaul += w.weight;
         return true;

@@ -43,7 +43,7 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
-        updateCosts();
+        //updateCosts();
 
         if (tickCtr < 0.0f)
         {
@@ -57,12 +57,7 @@ public class UIManager : MonoBehaviour
 
         if (Input.GetMouseButtonUp(1))
         {
-            if (currentActiveBuildingChangingProperties != null)
-            {
-                currentActiveBuildingChangingProperties.deselect();
-            }
-            currentActiveBuildingChangingProperties = null;
-            currentlySelectedBuilding = null;
+            deselectBuilding();
             HexManager.instance.changeMode(HexManager.SelectionMode.HEX);
         }
     }
@@ -92,6 +87,22 @@ public class UIManager : MonoBehaviour
                 CostString += b.type + " " + b.numericalCost + "\n";
             }
             buildingCostTexts[i].text = CostString;
+        }
+    }
+
+    public void deselectBuilding()
+    {
+        if (currentActiveBuildingChangingProperties != null)
+        {
+            currentActiveBuildingChangingProperties.deselect();
+        }
+        currentActiveBuildingChangingProperties = null;
+        currentlySelectedBuilding = null;
+
+        if (HexManager.instance.showingWaterTiles)
+        {
+            HexManager.instance.hideWaterTiles();
+            HexManager.instance.showingWaterTiles = false;
         }
     }
 }

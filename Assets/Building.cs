@@ -26,8 +26,11 @@ public class Building : MonoBehaviour
     public bool isBig = false;
     public float constructionTime;
     public bool requiresWater;
+    public bool requiresDry;
     public bool running = false;
     public bool taskSet = false;
+
+    public bool requiresStocking = false;
 
     public enum BuildingTypes
     {
@@ -46,7 +49,8 @@ public class Building : MonoBehaviour
         WELL,
         STONEBREWERY,
         DEBUGQUARRY,
-        HOPSFARM
+        HOPSFARM,
+        APOTHECARY
     }
 
     public BuildingID ID;
@@ -104,10 +108,21 @@ public class Building : MonoBehaviour
     {
         return false;
     }
+
+    public virtual bool canStock()
+    {
+        return false;
+    }
     public virtual void activate()
     {
 
     }
+
+    public virtual void stock(Dorf d)
+    {
+
+    }
+
     public virtual void onPlotPlaced()
     {
         foreach (BuildingCost cost in costs)
@@ -118,7 +133,7 @@ public class Building : MonoBehaviour
         {
             if (!cost2.canPayCost())
             {
-                UIManager.instance.currentlySelectedBuilding = null;
+                UIManager.instance.deselectBuilding();
                 break;
             }
         }

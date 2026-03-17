@@ -513,10 +513,14 @@ MonoBehaviour:
   buttons:
   - {fileID: 6326503089285316624}
   parentHex: {fileID: 0}
-  storage: []
+  storage:
+  - maxStorage: 20
+    occupiedStorage: 0
+    type: 5
   isBig: 0
   constructionTime: 0
   requiresWater: 1
+  requiresDry: 0
   running: 0
   taskSet: 0
   ID: 6
@@ -530,7 +534,7 @@ MonoBehaviour:
   brewValue: 0
   alchoholContentInc: 2.5
   rockSlider: {fileID: 559684582388650577}
-  hopsRequired: 0
+  hopsRequired: 20
   stockedHops: 0
 --- !u!1 &6942469922643045627
 GameObject:

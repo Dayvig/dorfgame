@@ -36,7 +36,7 @@ public class Quarry : Building
         {
             gatheredBuildingResources.Add(new BuildingCost(0, c.type));
         }
-        DorfManager.instance.setConstructionSite(this);
+        //DorfManager.instance.setConstructionSite(this);
         isBuilding = true;
         foreach (Segment s in hex.segments)
         {
@@ -48,20 +48,20 @@ public class Quarry : Building
         availableSlots[slot] = !availableSlots[slot];
         if (availableSlots[slot])
         {
-            DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(DorfTask.WORKBUILDING, this.gameObject.transform.position, this, slot);
+            DorfManager.PersonalTask thisTask = new DorfManager.PersonalTask(DorfTask.WORKBUILDING, this.gameObject.transform.position, this, slot);
             thisTask.setMaxDorves(thisTask, 1);
-            DorfManager.instance.allCurrentTasks.Add(thisTask);
+            //DorfManager.instance.allCurrentTasks.Add(thisTask);
         }
         else
         {
             assignedDorves[slot] = null;
-            foreach (DorfManager.DorfTaskInProgress task in DorfManager.instance.allCurrentTasks)
+            /*foreach (DorfManager.PersonalTask task in DorfManager.instance.allCurrentTasks)
             {
                 if (task.targetBuilding != null && task.targetBuilding.Equals(this) && task.targetBuildingSlot == slot)
                 {
                     task.complete();
                 }
-            }
+            }*/
         }
 
         buttons[slot].transform.GetChild(0).GetComponentInChildren<UnityEngine.UI.Image>().color = availableSlots[slot] ? Color.green : Color.black;
@@ -88,8 +88,9 @@ public class Quarry : Building
         }
     }
 
-    private void Update()
+    /*private void Update()
     {
+        Debug.Log("Quarry Update");
         if (selected)
         {
             for (int i = 0; i < menuObjects.Count;i++)
@@ -130,6 +131,6 @@ public class Quarry : Building
             }
         }
 
-    }
+    }*/
 
 }

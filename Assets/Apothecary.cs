@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static ModelGame;
 
-public class Cellar : SegmentBuilding
+public class Apothecary : SegmentBuilding
 {
     public override void setTask(Segment seg)
     {
@@ -15,5 +15,10 @@ public class Cellar : SegmentBuilding
         //DorfManager.instance.setConstructionSite(this);
         isBuilding = true;
         seg.occupied = true;
+    }
+
+    public override bool canBePlaced(Segment targetSegment)
+    {
+        return !targetSegment.parentHex.hasWater;
     }
 }

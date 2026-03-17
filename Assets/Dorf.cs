@@ -26,7 +26,7 @@ public class Dorf : MonoBehaviour
     public float horniness = 0.0f;
     public float sexInterval = 60.0f;
 
-    public DorfManager.DorfTaskInProgress taskInProgress;
+    public List<DorfManager.PersonalTask> taskQueue = new List<DorfManager.PersonalTask>();
 
     public Building home = null;
     public Building targetBuilding = null;
@@ -126,14 +126,27 @@ public class Dorf : MonoBehaviour
                 waypoints.RemoveAt(0);
             }
         }
-        if (taskInProgress != null && (Vector2.Distance(transform.position, currentTaskTargetPos) < 0.1f || taskInProgress.doesNotRequireLocation))
+        if (taskQueue.Count > 0)
         {
-            currentState = DorfState.PERFORMINGTASK;
+            if (taskQueue[0].advanceCondition())
+            {
+                currentState = DorfState.PERFORMINGTASK;
+                taskQueue[0].advanceTask();
+            }
         }
         foreach (WorldResource w in heldResources)
         {
             w.transform.position = this.transform.position + new Vector3(0f, -0.25f, 0f);
         }
+    }
+
+    public void abandonAllCurrentTasks()
+    {
+        foreach (DorfManager.PersonalTask p in taskQueue)
+        {
+            p.abandon(this);
+        }
+        taskQueue.Clear();
     }
 
     public void addWaypoints(Vector2 target, Hex endpointHex)

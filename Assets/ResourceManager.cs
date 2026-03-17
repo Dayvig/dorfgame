@@ -32,6 +32,7 @@ public class ResourceManager : MonoBehaviour
     public List<Building> storageBuildings = new List<Building>();
     public List<Building> housing = new List<Building>();
     public List<Building> activatableBuildings = new List<Building>();
+    public List<Building> stockableBuildings = new List<Building>();
 
     private void Awake()
     {

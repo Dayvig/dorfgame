@@ -29,6 +29,7 @@ public class HexManager : MonoBehaviour
     public List<Feature> allFeatures = new List<Feature>();
     public List<Building> allBuildings = new List<Building>();
 
+    public bool showingWaterTiles = false;
     public enum SelectionMode
     {
         HEX,
@@ -506,5 +507,61 @@ public class HexManager : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    public void setWaterTiles(Hex center, int depth)
+    {
+        int currentDepth = 0;
+        List<Hex> hexList = new List<Hex>();
+        List<Hex> toAdd = new List<Hex>();
+
+        hexList.Add(center);
+        while (currentDepth < depth)
+        {
+            foreach (Hex h in hexList)
+            {
+                Debug.Log("Target:" + h.name);
+                foreach (Hex neighbor in h.neighbors)
+                {
+                    Debug.Log(neighbor == null);
+
+                    if (neighbor != null)
+                    {
+                        Debug.Log("Neighbor: " + neighbor.name);
+                        if (!hexList.Contains(neighbor))
+                        {
+                            Debug.Log("Adding neighbor:" + neighbor.name);
+                            toAdd.Add(neighbor);
+                        }
+                    }
+                }
+            }
+            hexList.AddRange(toAdd);
+            toAdd.Clear();
+            currentDepth++;
+        }
+        foreach (Hex water in hexList)
+        {
+            water.hasWater = true;
+        }
+    }
+
+    public void showAllWaterTiles()
+    {
+        foreach (Hex hex in HexManager.instance.hexes)
+        {
+            hex.waterVisual.color = hex.hasOriginalSourceWater ? new Color(1f, 1f, 1f, 0.5f) : new Color(1f, 1f, 1f, 0.25f);
+            hex.waterVisual.gameObject.SetActive(hex.hasWater);
+        }
+        showingWaterTiles = true;
+    }
+
+    public void hideWaterTiles()
+    {
+        foreach (Hex hex in HexManager.instance.hexes)
+        {
+            hex.waterVisual.gameObject.SetActive(false);
+        }
+        showingWaterTiles = false;
     }
 }

@@ -21,22 +21,22 @@ public class HopsFarm : SegmentBuilding
     public GameObject[] hopsVisuals = new GameObject[10];
     private void Start()
     {
-        buttons[0].onClick.AddListener(delegate { setSlotStatus(0); });
-        buttons[1].onClick.AddListener(delegate { setSlotStatus(1); });
+        //buttons[0].onClick.AddListener(delegate { setSlotStatus(0); });
+        //buttons[1].onClick.AddListener(delegate { setSlotStatus(1); });
     }
-    void setSlotStatus(int slot)
+    /*void setSlotStatus(int slot)
     {
         availableSlots[slot] = !availableSlots[slot];
         if (availableSlots[slot])
         {
-            DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(DorfTask.WORKBUILDING, this.gameObject.transform.position, this, slot);
+            DorfManager.PersonalTask thisTask = new DorfManager.PersonalTask(DorfTask.WORKBUILDING, this.gameObject.transform.position, this, slot);
             thisTask.setMaxDorves(thisTask, 1);
             DorfManager.instance.allCurrentTasks.Add(thisTask);
         }
         else
         {
             assignedDorves[slot] = null;
-            foreach (DorfManager.DorfTaskInProgress task in DorfManager.instance.allCurrentTasks)
+            foreach (DorfManager.PersonalTask task in DorfManager.instance.allCurrentTasks)
             {
                 if (task.targetBuilding != null && task.targetBuilding.Equals(this) && task.targetBuildingSlot == slot)
                 {
@@ -109,7 +109,7 @@ public class HopsFarm : SegmentBuilding
 
     public void setHarvestTask()
     {
-        DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(3.0f, DorfTask.HARVEST,
+        DorfManager.PersonalTask thisTask = new DorfManager.PersonalTask(3.0f, DorfTask.HARVEST,
         () => {
             ResourceManager.instance.addResource(ResourceManager.ResourceType.HOPS, (int)ResourceManager.instance.getResource(ResourceManager.ResourceType.HOPS).obj.GetComponent<WorldResource>().value * hops, true);
             for (int i = 0; i < hops; i++)
@@ -128,5 +128,5 @@ public class HopsFarm : SegmentBuilding
         },
         visual.transform.position, this.parentSegment);
         DorfManager.instance.allCurrentTasks.Add(thisTask);
-    }
+    }*/
 }

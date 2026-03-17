@@ -155,11 +155,16 @@ MonoBehaviour:
   - maxStorage: 500
     occupiedStorage: 500
     type: 0
+  - maxStorage: 500
+    occupiedStorage: 500
+    type: 5
   isBig: 1
   constructionTime: 0
   requiresWater: 0
+  requiresDry: 0
   running: 0
   taskSet: 0
+  requiresStocking: 0
   ID: 7
   menuOffsets:
   - {x: -50, y: 150}

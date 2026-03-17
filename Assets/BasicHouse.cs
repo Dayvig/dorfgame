@@ -27,7 +27,7 @@ public class BasicHouse : SegmentBuilding
         {
             gatheredBuildingResources.Add(new BuildingCost(0, c.type));
         }
-        DorfManager.instance.setConstructionSite(this);
+        //DorfManager.instance.setConstructionSite(this);
         isBuilding = true;
         seg.occupied = true;
     }

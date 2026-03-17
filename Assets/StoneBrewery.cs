@@ -26,7 +26,7 @@ public class StoneBrewery : SegmentBuilding
     public float hopsRequired;
     public float stockedHops = 0f;
 
-    private void Start()
+    /*private void Start()
     {
         buttons[0].onClick.AddListener(delegate { setSlotStatus(0); });
         rockSlider.onValueChanged.AddListener(delegate { changeRockdustStatus(rockSlider.value); });
@@ -67,102 +67,93 @@ public class StoneBrewery : SegmentBuilding
                 rockdustConversionRate = 0.9f; break;
             case 6:
                 rockdustConversionRate = 1.0f; break;
-        }*/
-    }
-    public override void onPlace(Dorf builder)
+        }
+}
+public override void onPlace(Dorf builder)
     {
         base.onPlace(builder);
         ResourceManager.instance.activatableBuildings.Add(this);
+        ResourceManager.instance.stockableBuildings.Add(this);
+
     }
     public override bool canBeActivated()
     {
-        //and has hops
-        return !running && brewValue == 0f && parentHex.hasWater && !taskSet;
+        return stockedHops >= hopsRequired && !running && brewValue == 0f && parentHex.hasWater && !taskSet;
     }
 
-    void pickupHops(Dorf assignee)
+    public override bool canStock()
     {
-        Debug.Log("New Pickup Task Created");
-        DorfManager.DorfTaskInProgress thisTask;
+        return !running && stockedHops < hopsRequired;
+    }
 
-        WorldResource r = null;
-        foreach (WorldResource w in DorfManager.instance.clutter)
+    public override void stock(Dorf d)
+    {
+        base.stock(d);
+        int hopsInTransit = 0;
+        foreach (WorldResource w in ResourcesInTransit)
         {
             if (w.type.Equals(ResourceManager.ResourceType.HOPS))
             {
-                r = w;
-                break;
+                hopsInTransit += (int)w.value;
             }
         }
-
-        if (r == null)
+        if (stockedHops + hopsInTransit < hopsRequired)
         {
-            Building close = DorfManager.instance.closestStorageBuilding(assignee.transform.position, ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops, false, false);
-            if (close == null)
+            pickupHops(d);
+        }
+    }
+
+    public void pickupHops(Dorf assignee)
+    {
+        int hopsInTransit = 0;
+        foreach (WorldResource w in ResourcesInTransit)
+        {
+            if (w.type.Equals(ResourceManager.ResourceType.HOPS))
             {
-                return;
+                hopsInTransit += (int)w.value;
             }
-            else
+        }
+        if (DorfManager.instance.resourceExists(ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops - hopsInTransit) && assignee.currentHaul < assignee.carryingCapacity && hopsInTransit < hopsRequired)
+        {
+            WorldResource nxt = DorfManager.instance.closestResourceToPickup(assignee.transform.position, ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops - hopsInTransit, false);
+            DorfManager.instance.moveToAndPickupResource(assignee, nxt, ResourceManager.ResourceType.HOPS, hopsRequired - stockedHops, false, this, () =>
             {
-                thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
-                () => { },
-                close.gameObject.transform.position, close.parentHex);
-                thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
-                {
-                    WorldResource newResource = null;
-                    foreach (Building.StorageSlot slot in close.storage)
-                    {
-                        if (slot.type.Equals(ResourceManager.ResourceType.HOPS))
-                        {
-                            newResource = ResourceManager.instance.createNewWorldResource(close.parentHex, ResourceManager.ResourceType.HOPS, this.gameObject.transform.position, 1.0f, false);
-                            if (slot.occupiedStorage > (hopsRequired - stockedHops))
-                            {
-                                if (((hopsRequired - stockedHops) * newResource.weight) + assignee.currentHaul <= assignee.carryingCapacity)
-                                {
-                                    newResource.value = hopsRequired - stockedHops;
-                                    newResource.weight = (hopsRequired - stockedHops) * newResource.weight;
-                                    assignee.pickupWorldResource(newResource);
-                                    slot.occupiedStorage -= newResource.value;
-                                }
-                            }
-                            else
-                            {
-                                if (((slot.occupiedStorage) * newResource.weight) + assignee.currentHaul <= assignee.carryingCapacity)
-                                {
-                                    newResource.value = slot.occupiedStorage;
-                                    newResource.weight = (slot.occupiedStorage) * newResource.weight;
-                                    assignee.pickupWorldResource(newResource);
-                                    slot.occupiedStorage -= newResource.value;
-                                }
-                            }
-                            UIManager.instance.updateCounterDisplay();
-                            break;
-                        }
-                    }
-                });
-            }
+                pickupHops(assignee);
+            });
         }
         else
         {
-            thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
-            () => { },
-            r.gameObject.transform.position, r.thisHex);
-            thisTask = thisTask.setMaxDorves(thisTask, 1).setResult(thisTask, () =>
+            DorfManager.instance.moveToBuilding(assignee, this, () =>
             {
-
+                List<WorldResource> toBrew = new List<WorldResource>();
+                foreach (WorldResource w in assignee.heldResources)
+                {
+                    if (w.type.Equals(ResourceManager.ResourceType.HOPS))
+                    {
+                        toBrew.Add(w);
+                    }
+                }
+                foreach (WorldResource w in toBrew)
+                {
+                    stockedHops += w.value;
+                    DorfManager.instance.drop(assignee, w);
+                    ResourceManager.instance.toBeDestroyed.Add(w);
+                    ResourceManager.instance.consumeResource(ResourceManager.ResourceType.HOPS, (int)w.value, w.isClutter);
+                }
             });
-            }
+        }
     }
 
     public override void activate()
     {
-        DorfManager.DorfTaskInProgress thisTask;
+        DorfManager.PersonalTask thisTask;
 
-        thisTask = new DorfManager.DorfTaskInProgress(1f, DorfTask.BREW, transform.position, this);
+        thisTask = new DorfManager.PersonalTask(1f, DorfTask.BREW, transform.position, this);
         thisTask.setResult(thisTask, () =>
         {
             running = true;
             tickCtr = 0.0f;
+            stockedHops = 0f;
         });
         DorfManager.instance.allCurrentTasks.Add(thisTask);
         taskSet = true;
@@ -170,7 +161,7 @@ public class StoneBrewery : SegmentBuilding
 
     public void setHarvestTask()
     {
-        DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(3.0f, DorfTask.HARVEST,
+        DorfManager.PersonalTask thisTask = new DorfManager.PersonalTask(3.0f, DorfTask.HARVEST,
         () => {
             while (brewValue > 0)
             {
@@ -196,7 +187,7 @@ public class StoneBrewery : SegmentBuilding
     }
     public void setTendingTask()
     {
-        DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(2.0f, DorfTask.BREW,
+        DorfManager.PersonalTask thisTask = new DorfManager.PersonalTask(2.0f, DorfTask.BREW,
         () => {
             brewValue *= 1.2f;
         },
@@ -204,7 +195,7 @@ public class StoneBrewery : SegmentBuilding
         thisTask.setMaxDorves(thisTask, 1);
         DorfManager.instance.assignDorfToTask(assignedDorves[0], thisTask);
         DorfManager.instance.allCurrentTasks.Add(thisTask);
-    }
+    }*/
 
     private void Update()
     {
@@ -242,7 +233,7 @@ public class StoneBrewery : SegmentBuilding
                     running = false;
                     tickCtr = 0f;
                     ResourceManager.instance.harvestableBuildings.Add(this);
-                    setHarvestTask();
+                    //setHarvestTask();
                 }
             }
         }

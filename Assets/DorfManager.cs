@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data.SqlTypes;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static ModelGame;
@@ -19,11 +20,11 @@ public class DorfManager : MonoBehaviour
     public List<Dorf> dorves = new List<Dorf>();
     public List<Dorf> dorfGraveyard = new List<Dorf>();
 
-    public List<DorfTaskInProgress> allCurrentTasks = new List<DorfTaskInProgress>();
+    public List<GlobalTask> allCurrentTasks = new List<GlobalTask>();
     public List<string> tasksInProgressDisplay = new List<string>();
 
-    public List<DorfTaskInProgress> taskQueue = new List<DorfTaskInProgress>();
-    public List<DorfTaskInProgress> tasksToRemove = new List<DorfTaskInProgress>();
+    public List<GlobalTask> taskQueue = new List<GlobalTask>();
+    public List<GlobalTask> tasksToRemove = new List<GlobalTask>();
 
     public List<WorldResource> clutter = new List<WorldResource>();
 
@@ -45,7 +46,7 @@ public class DorfManager : MonoBehaviour
         if (taskAssignTimer > taskAssignDelay)
         {
             tasksInProgressDisplay.Clear();
-            foreach (DorfTaskInProgress t in allCurrentTasks)
+            foreach (GlobalTask t in allCurrentTasks)
             {
                 tasksInProgressDisplay.Add(t.type.ToString());
             }
@@ -72,17 +73,128 @@ public class DorfManager : MonoBehaviour
                 }
             }
 
-            //starving dorves abandon tasks and eat
+            List<Dorf> idleDorves = new List<Dorf>();
+            foreach (Dorf d in dorves)
+            {
+                if (d.currentState.Equals(Dorf.DorfState.IDLE))
+                {
+                    idleDorves.Add(d);
+                }
+            }
+            foreach (Dorf d in idleDorves){
+                //Debug.Log(d.name);
+                foreach (GlobalTask g in allCurrentTasks)
+                {
+                    if (d.currentState == Dorf.DorfState.IDLE)
+                    {
+                        Debug.Log("Assigning task to" + d.name);
+                        g.stages[0].assignToDorf(d);
+                        d.currentState = Dorf.DorfState.WALKING;
+                    }
+                }
+            }
+
+            taskAssignTimer -= taskAssignDelay;
+        }
+
+        foreach (GlobalTask t in taskQueue)
+        {
+            Debug.Log("Adding task " + t.type);
+            allCurrentTasks.Add(t);
+        }
+        taskQueue.Clear();
+
+        foreach (GlobalTask t in tasksToRemove)
+        {
+            allCurrentTasks.Remove(t);
+        }
+        tasksToRemove.Clear();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*private void Update()
+    {
+        taskAssignTimer += Time.deltaTime;
+
+        if (taskAssignTimer > taskAssignDelay)
+        {
+            tasksInProgressDisplay.Clear();
+            foreach (GlobalTask t in allCurrentTasks)
+            {
+                tasksInProgressDisplay.Add(t.type.ToString());
+            }
+
+            //kill dorves
+            foreach (Dorf d in dorfGraveyard)
+            {
+                d.gameObject.SetActive(false);
+                dorves.Remove(d);
+            }
+
+
+            //house dorves
+            foreach (Building b in ResourceManager.instance.housing)
+            {
+                BasicHouse house = (BasicHouse)b;
+                if (house.owners.Count >= house.capacity) { continue; }
+                foreach (Dorf d in dorves)
+                {
+                    if (d.home == null)
+                    {
+                        d.home = house;
+                    }
+                }
+            }
+
+            starving dorves abandon tasks and eat
             for (int i = 0; i < dorves.Count; i++)
             {
                 Dorf d = dorves[i];
 
                 if (d.currentFood <= d.maxFood * 0.25f && resourceExists(ResourceManager.ResourceType.FOOD, 1) && !d.modifiers.Contains(Dorf.DorfModifier.STARVING))
                 {
-                    if (d.taskInProgress != null)
-                    {
-                        d.taskInProgress.abandon(d);
-                    }
+                    d.abandonAllCurrentTasks();
                     d.modifiers.Add(Dorf.DorfModifier.STARVING);
                 }
                 //clear starving from non starving dorves
@@ -110,40 +222,14 @@ public class DorfManager : MonoBehaviour
             taskAssignTimer -= taskAssignDelay;
         }
 
-        foreach (DorfTaskInProgress task in allCurrentTasks)
-        {
-            task.run();
-            foreach (Dorf d in task.assignedDorves)
-            {
-                if (d.currentState == Dorf.DorfState.PERFORMINGTASK)
-                {
-                    if (d.currentTask.Equals(DorfTask.WORKBUILDING))
-                    {
-                        d.taskInProgress.targetBuilding.assignedDorves[d.taskInProgress.targetBuildingSlot] = d;
-                    }
-                    else
-                    {
-                        task.completionCtr += Time.deltaTime * d.workRate;
-                        if (task.progressBar != null)
-                        {
-                            task.progressBar.sizeDelta = new Vector2((task.completionCtr / task.timeForTask) * task.maxTaskBarWidth, 0.3f);
-                        }
-                    }
-                }
-            }
-            if (!task.type.Equals(DorfTask.WORKBUILDING) && !task.onGoing && task.completionCtr > task.timeForTask)
-            {
-                task.complete();
-            }
-        }
-        foreach (DorfTaskInProgress t in taskQueue)
+        foreach (GlobalTask t in taskQueue)
         {
             Debug.Log("Adding task " + t.type);
             allCurrentTasks.Add(t);
         }
         taskQueue.Clear();
 
-        foreach (DorfTaskInProgress t in tasksToRemove)
+        foreach (GlobalTask t in tasksToRemove)
         {
             allCurrentTasks.Remove(t);
         }
@@ -172,7 +258,7 @@ public class DorfManager : MonoBehaviour
             {
                 if (idleDorves[j].modifiers.Contains(Dorf.DorfModifier.STARVING) && resourceExists(ResourceManager.ResourceType.FOOD, 1))
                 {
-                    gatherFood(idleDorves[j], false, null);
+                    //gatherFood(idleDorves[j], false, null);
                     idleDorves.Remove(idleDorves[j]);
                 }
             }
@@ -197,8 +283,8 @@ public class DorfManager : MonoBehaviour
 
             //find task with least dorves assigned
             int least = -1;
-            DorfTaskInProgress targetTask = null;
-            foreach (DorfTaskInProgress task in allCurrentTasks)
+            GlobalTask targetTask = null;
+            foreach (GlobalTask task in allCurrentTasks)
             {
                 if ((least == -1 || task.assignedDorves.Count < least) && (task.assignedDorves.Count < task.maxDorves || task.maxDorves == -1))
                 {
@@ -211,9 +297,9 @@ public class DorfManager : MonoBehaviour
             {
                 if (targetTask.assignedDorves.Count == 0 && !targetTask.type.Equals(DorfTask.WORKBUILDING))
                 {
-                    targetTask.start();
+                    //targetTask.start();
                 }
-                assignDorfToTask(idleDorves[0], targetTask);
+                //assignDorfToTask(idleDorves[0], targetTask);
                 idleDorves.Remove(idleDorves[0]);
             }
             //no pressing tasks to attend to
@@ -226,8 +312,20 @@ public class DorfManager : MonoBehaviour
                     if (d.currentFood <= d.maxFood * 0.75f && d.fullness >= d.mealInterval && resourceExists(ResourceManager.ResourceType.FOOD, 1))
                     {
                         Debug.Log("Sending Dorves to eat");
-                        gatherFood(d, true, d.home == null ? house : d.home);
+                        //gatherFood(d, true, d.home == null ? house : d.home);
                         idleDorves.Remove(d);
+                    }
+                }
+                //stock buildings
+                for (int i = 0; i < idleDorves.Count; i++)
+                {
+                    Dorf d = idleDorves[i];
+                    foreach (Building b in ResourceManager.instance.stockableBuildings)
+                    {
+                        if (b.canStock()){
+                            b.stock(d);
+                            idleDorves.Remove(d);
+                        }
                     }
                 }
 
@@ -270,7 +368,7 @@ public class DorfManager : MonoBehaviour
                     }
                     if (d2 != null)
                     {
-                        if (reproduce(d, d2))
+                        /*if (reproduce(d, d2))
                         {
                             idleDorves.Remove(d);
                             idleDorves.Remove(d2);
@@ -348,11 +446,11 @@ public class DorfManager : MonoBehaviour
             dropAllResources(targetDorf);
             return;
         }
-        DorfManager.DorfTaskInProgress newTask;
+        DorfManager.PersonalTask newTask;
         Building close = closestStorageBuilding(targetDorf.transform.position, targetDorf.heldResources[0].type, targetDorf.heldResources[0].value, false, true);
 
         if (close == null) { return; }
-        newTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL, close.transform.position, close);
+        newTask = new DorfManager.PersonalTask(0.1f, DorfTask.HAUL, close.transform.position, close);
         newTask = newTask.setMaxDorves(newTask, 1).setResult(newTask, () =>
         {
             if (targetDorf.heldResources.Count == 0)
@@ -440,6 +538,26 @@ public class DorfManager : MonoBehaviour
         return closest;
     }
 
+    public WorldResource closestResourceToPickup(Vector2 position, ResourceManager.ResourceType resource, float weightLimit, bool storableOnly)
+    {
+        WorldResource closest = null;
+        float least = -1;
+        List<WorldResource> available = storableOnly ? storableClutter() : clutter;
+        foreach (WorldResource w in available)
+        {
+            if (w.type.Equals(resource) && !w.toBePickedUp && w.weight <= weightLimit)
+            {
+                float dist = Vector2.Distance(position, w.gameObject.transform.position);
+                if (least == -1 || dist < least)
+                {
+                    closest = w;
+                    least = dist;
+                }
+            }
+        }
+        return closest;
+    }
+
     public bool resourceExists(ResourceManager.ResourceType type, float amount)
     {
         //if food exists
@@ -468,9 +586,9 @@ public class DorfManager : MonoBehaviour
         return resExists;
     }
 
-    public (bool, Building, Building.StorageSlot) moveToResource(Dorf d, WorldResource r, ResourceManager.ResourceType type, float amount, bool exactAmount, Action nextStep)
+    /*public (bool, Building, Building.StorageSlot) moveToResource(Dorf d, WorldResource r, ResourceManager.ResourceType type, float amount, bool exactAmount, Action nextStep)
     {
-        DorfTaskInProgress thisTask;
+        PersonalTask thisTask;
         if (r == null)
         {
             r = closestResourceToPickup(d.gameObject.transform.position, type, false);
@@ -489,7 +607,7 @@ public class DorfManager : MonoBehaviour
                         break;
                     }
                 }
-                thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
+                thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.HAUL,
                 nextStep,
                 close.gameObject.transform.position, close.parentHex);
                 thisTask = thisTask.setMaxDorves(thisTask, 1);
@@ -500,7 +618,7 @@ public class DorfManager : MonoBehaviour
         }
         else
         {
-            thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
+            thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.HAUL,
             nextStep,
             r.gameObject.transform.position, r.thisHex);
             thisTask = thisTask.setMaxDorves(thisTask, 1);
@@ -513,9 +631,9 @@ public class DorfManager : MonoBehaviour
 
     public bool moveToBuilding(Dorf d, Building b, Action nextStep)
     {
-        DorfTaskInProgress thisTask;
+        PersonalTask thisTask;
         if (b == null) { return false; }
-        thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
+        thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.HAUL,
         nextStep,
         b.gameObject.transform.position, b.parentHex);
         thisTask = thisTask.setMaxDorves(thisTask, 1);
@@ -527,10 +645,10 @@ public class DorfManager : MonoBehaviour
     public bool dropOffResource(Dorf d, WorldResource worldRes, bool all, Action nextStep)
     {
         Building close = closestStorageBuilding(d.gameObject.transform.position, worldRes.type, worldRes.value, false, true);
-        DorfTaskInProgress thisTask;
+        PersonalTask thisTask;
         if (close == null) { dropAllResources(d);  return false; }
 
-        thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.HAUL,
+        thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.HAUL,
         () =>
         {
             Building.StorageSlot tmp = null;
@@ -606,14 +724,22 @@ public class DorfManager : MonoBehaviour
 
         moveToAndPickupResource(d, worldRes, type, amount, true, constructionSite, () =>
         {
-            bool success = false;
-            success = moveToBuilding(d, constructionSite, () =>
+            if (d.currentHaul >= d.carryingCapacity || !resourceExists(type, amount))
             {
-                finalSuccess = success;
-                if (!success) { return; };
-                finalSuccess = addResourcesToConstruction(d, constructionSite);
-                nextStep();
-            });
+                bool success = false;
+                success = moveToBuilding(d, constructionSite, () =>
+                {
+                    finalSuccess = success;
+                    if (!success) { return; };
+                    finalSuccess = addResourcesToConstruction(d, constructionSite);
+                    nextStep();
+                });
+            }
+            else
+            {
+                WorldResource nxt = closestResourceToPickup(d.transform.position, type, d.carryingCapacity - d.currentHaul, false);
+                bringResourceToConstructionSite(d, nxt, type, amount, constructionSite, nextStep);
+            }
         });
         return finalSuccess;
     }
@@ -664,13 +790,12 @@ public class DorfManager : MonoBehaviour
         WorldResource tmp = null;
 
         (bool, Building, Building.StorageSlot) result = (false, null, null);
-        if (worldRes != null) { worldRes.toBePickedUp = true; }
         result = moveToResource(d, worldRes, type, amount, exactAmount, () =>
         {
             if (result.Item1 == false) { return; }
             else if (result.Item2 == null) {
                 tmp = pickupResource(d, worldRes, type, amount, exactAmount, null, null);
-                constructionTarget.ResourcesInTransit.Add(tmp);
+                constructionTarget.ResourcesInTransit.Add(worldRes);
             }
             else { tmp = pickupResource(d, worldRes, type, amount, exactAmount, result.Item2, result.Item3);
                 constructionTarget.ResourcesInTransit.Add(tmp);
@@ -689,7 +814,9 @@ public class DorfManager : MonoBehaviour
                 WorldResource newResource = ResourceManager.instance.createNewWorldResource(storage.parentHex, type, storage.gameObject.transform.position, 1.0f, false);
 
                 float targetValue = amount;
-                float valueToWeight = newResource.value / newResource.weight;
+                Debug.Log("Initial Target" + targetValue);
+
+                float valueToWeight = newResource.weight / newResource.value;
 
                 if (targetValue > slot.occupiedStorage)
                 {
@@ -699,11 +826,17 @@ public class DorfManager : MonoBehaviour
                 if ((targetValue * valueToWeight) + d.currentHaul > d.carryingCapacity)
                 {
                     newResource.weight = d.carryingCapacity - d.currentHaul;
-                    targetValue = valueToWeight * newResource.weight;
+                    targetValue = 1/valueToWeight * newResource.weight;
+                    if (targetValue < 1)
+                    {
+                        targetValue = 1;
+                        newResource.weight = targetValue * valueToWeight;
+                    }
                 }
 
+                Debug.Log("Final Target " + targetValue);
                 newResource.value = targetValue;
-                newResource.weight = targetValue * (1 / valueToWeight);
+                newResource.weight = targetValue * valueToWeight;
                 slot.occupiedStorage -= newResource.value;
                 UIManager.instance.updateCounterDisplay();
                 d.pickupWorldResource(newResource);
@@ -749,7 +882,7 @@ public class DorfManager : MonoBehaviour
             }
             return;
         }
-        moveToAndPickupResource(hungry, null, ResourceManager.ResourceType.FOOD, hungry.carryingCapacity - hungry.currentHaul, false, () =>
+        moveToAndPickupResource(hungry, null, ResourceManager.ResourceType.FOOD, 10, false, () =>
         {
             if (!comfortable)
             {
@@ -765,9 +898,9 @@ public class DorfManager : MonoBehaviour
 
     public void setConstructionSite(Building toConstruct)
     {
-        DorfTaskInProgress thisTask;
+        PersonalTask thisTask;
 
-        thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.NONE,
+        thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.NONE,
         () => { });
         thisTask = thisTask.setRunMethod(thisTask, () =>
         {
@@ -841,14 +974,14 @@ public class DorfManager : MonoBehaviour
                     }
                     if (diff > 0 && resourceExists(cost.type, diff))
                     {
-                        bringResourceToConstructionSite(d, null, cost.type, diff, toConstruct, () =>
+                        WorldResource nxt = closestResourceToPickup(d.transform.position, cost.type, false);
+                        bringResourceToConstructionSite(d, nxt, cost.type, diff, toConstruct, () =>
                         {
                         if (hasEnoughMaterials(toConstruct))
                         {
                             constructBuilding(d, toConstruct);
                         }
-                        else
-                        {
+                        else { 
                             constructionTask(d, toConstruct);
                         }
                         });
@@ -860,11 +993,11 @@ public class DorfManager : MonoBehaviour
         return false;
     }
 
-    public DorfTaskInProgress newWaitTask(Dorf d, Action run)
+    public PersonalTask newWaitTask(Dorf d, Action run)
     {
-        DorfTaskInProgress thisTask;
+        PersonalTask thisTask;
 
-        thisTask = new DorfManager.DorfTaskInProgress(0.1f, DorfTask.NONE,
+        thisTask = new DorfManager.PersonalTask(0.1f, DorfTask.NONE,
         () => { });
         thisTask = thisTask.setRunMethod(thisTask, () =>
         {
@@ -943,8 +1076,8 @@ public class DorfManager : MonoBehaviour
 
     public void moveToBuildingSite(Dorf builder, Building toConstruct)
     {
-        DorfManager.DorfTaskInProgress thisTask;
-        thisTask = new DorfManager.DorfTaskInProgress(0f, DorfTask.HAUL,
+        DorfManager.PersonalTask thisTask;
+        thisTask = new DorfManager.PersonalTask(0f, DorfTask.HAUL,
         () => { },
         toConstruct.gameObject.transform.position, toConstruct.parentHex);
         thisTask = thisTask.setMaxDorves(thisTask, 4).setResult(thisTask, () =>
@@ -955,11 +1088,11 @@ public class DorfManager : MonoBehaviour
         DorfManager.instance.taskQueue.Add(thisTask);
     }
 
-    public void constructBuilding(Dorf builder, Building toConstruct)
+    /*public void constructBuilding(Dorf builder, Building toConstruct)
     {
         Debug.Log("Constructing Building");
 
-        DorfManager.DorfTaskInProgress thisTask;
+        DorfManager.PersonalTask thisTask;
         foreach (WorldResource r in builder.heldResources)
         {
             ResourceManager.instance.toBeDestroyed.Add(r);
@@ -973,7 +1106,7 @@ public class DorfManager : MonoBehaviour
         UIManager.instance.updateCounterDisplay();
         Debug.Log("Setting Final Construction");
 
-        thisTask = new DorfManager.DorfTaskInProgress(toConstruct.constructionTime, DorfTask.BUILD,
+        thisTask = new DorfManager.PersonalTask(toConstruct.constructionTime, DorfTask.BUILD,
         () => { },
         toConstruct.gameObject.transform.position, toConstruct.parentHex);
         thisTask = thisTask.setMaxDorves(thisTask, 4).setResult(thisTask, () =>
@@ -1031,17 +1164,17 @@ public class DorfManager : MonoBehaviour
         UIManager.instance.updateCounterDisplay();
     }
 
-    public bool reproduce(Dorf primary, Dorf secondary)
+    /*public bool reproduce(Dorf primary, Dorf secondary)
     {
         Building targetBuilding = primary.home != null ? primary.home : secondary.home != null ? secondary.home : null;
-        DorfManager.DorfTaskInProgress thisTask;
+        DorfManager.PersonalTask thisTask;
         Vector2 randcircle = UnityEngine.Random.insideUnitCircle.normalized * 0.2f;
 
         if (targetBuilding == null) { return false; }
 
         if (targetBuilding.isBig)
         {
-            thisTask = new DorfManager.DorfTaskInProgress(10.0f, DorfTask.REPRODUCE,
+            thisTask = new DorfManager.PersonalTask(10.0f, DorfTask.REPRODUCE,
             () => { },
             targetBuilding.gameObject.transform.position + (Vector3)randcircle, targetBuilding.parentHex);
             thisTask = thisTask.setMaxDorves(thisTask, 2).setResult(thisTask, () =>
@@ -1058,7 +1191,7 @@ public class DorfManager : MonoBehaviour
         else
         {
             SegmentBuilding seg = targetBuilding as SegmentBuilding;
-            thisTask = new DorfManager.DorfTaskInProgress(10.0f, DorfTask.REPRODUCE,
+            thisTask = new DorfManager.PersonalTask(10.0f, DorfTask.REPRODUCE,
             () => { },
             seg.gameObject.transform.position + (Vector3)randcircle, seg.parentSegment);
             thisTask = thisTask.setMaxDorves(thisTask, 2).setResult(thisTask, () =>
@@ -1083,70 +1216,247 @@ public class DorfManager : MonoBehaviour
         DorfManager.instance.taskQueue.Add(thisTask);
         return true;
 
-    }
+    }*/
 
-    public void assignTask(DorfTaskInProgress task)
+    [Serializable]public class GlobalTask
     {
-        foreach (DorfTaskInProgress t in allCurrentTasks)
+        public List<Dorf> assignedDorves = new List<Dorf>();
+        public int maxDorves = -1;
+        public DorfTask type;
+        public List<Stage> stages = new List<Stage>();
+        public Action completionMethod;
+        public Action abandonMethod;
+        public GlobalTask (DorfTask type,  int maxDorves)
         {
-            if (t.type.Equals(task.type) && t.target.Equals(task.target))
+            this.type = type;
+            this.maxDorves = maxDorves;
+        }
+        public virtual void complete()
+        {
+            completionMethod();
+
+            foreach (Dorf d in assignedDorves)
             {
-                if (t.targetSegment != null && t.targetSegment != null && !t.targetSegment.Equals(task.targetSegment))
+                d.waypoints.Clear();
+                d.currentState = Dorf.DorfState.IDLE;
+                d.currentTask = DorfTask.NONE;
+                d.targetBuilding = null;
+            }
+            DorfManager.instance.tasksToRemove.Add(this);
+            assignedDorves.Clear();
+        }
+
+        public virtual void abandon()
+        {
+            abandonMethod();
+        }
+
+        public GlobalTask setCompletionMethod(Action value)
+        {
+            completionMethod = value;
+            return this;
+        }
+        public GlobalTask setAbandonMethod(Action value)
+        {
+            abandonMethod = value;
+            return this;
+        }
+
+        public void nextStage()
+        {
+            if (stages.Count == 1)
+            {
+                stages.Clear();
+            }
+            else
+            {
+                stages.RemoveAt(0);
+            }
+            if (stages.Count <= 0)
+            {
+                complete();
+            }
+        }
+        [Serializable]public class Stage
+        {
+            public GlobalTask parent;
+            
+            public float completionCtr;
+            public float completionTime;
+
+            public List<Vector2> taskLocations = new List<Vector2>();
+            public Vector2 taskLocation;
+
+            public Hex target;
+            public Segment targetSegment;
+            public Building targetBuilding;
+            public DorfTask type;
+
+            public Func<bool> completionCondition;
+            public RectTransform progressBar;
+            public Canvas taskBarCanvas;
+            public float maxTaskBarWidth;
+
+            public bool hasBar = true;
+
+            public Action completionMethod;
+            public PersonalTask toBeAssigned;
+            public bool isComplete = false;
+
+            public Stage(GlobalTask parent, DorfTask type, float timeToComplete,Vector2 location, Func<bool> completionCondition, Action completionMethod, PersonalTask toBeAssigned)
+            {
+                this.parent = parent;
+                this.type = type;
+                this.completionTime = timeToComplete;
+                this.taskLocation = location;
+                this.completionCondition = completionCondition;
+                this.completionMethod = completionMethod;
+                this.toBeAssigned = toBeAssigned;
+            }
+            public Stage(GlobalTask parent, DorfTask type, float timeToComplete, Vector2 location, Action completionMethod, PersonalTask toBeAssigned)
+            {
+                this.parent = parent;
+                this.type = type;
+                this.completionTime = timeToComplete;
+                this.taskLocation = location;
+                this.completionCondition = defaultCompletionCondition;
+                this.completionMethod = completionMethod;
+                this.toBeAssigned = toBeAssigned;
+            }
+            public void complete()
+            {
+                if (!isComplete)
                 {
-                    continue;
-                }
-                foreach (Dorf d in dorves)
-                {
-                    if (d.currentState.Equals(Dorf.DorfState.IDLE))
+                    isComplete = true;
+                    Debug.Log("Completing Stage");
+                    setTaskBarVisible(false);
+                    completionMethod();
+                    foreach (Dorf d in parent.assignedDorves)
                     {
-                        assignDorfToTask(d, t);
-                        break;
+                        for (int p = 0; p < d.taskQueue.Count; p++)
+                        {
+                            if (d.taskQueue[p].parentTask.Equals(this))
+                            {
+                                d.taskQueue[p].abandon(d);
+                                d.taskQueue.RemoveAt(p);
+                            }
+                        }
                     }
+
+                    parent.nextStage();
                 }
-                return;
             }
-        }
-        allCurrentTasks.Add(task);
-        foreach (Dorf d in dorves)
-        {
-            if (d.currentState.Equals(Dorf.DorfState.IDLE))
+
+            public void advance()
             {
-                assignDorfToTask(d, task);
-                break;
+                progressBar.sizeDelta = new Vector2((completionCtr / completionTime) * maxTaskBarWidth, progressBar.sizeDelta.y);
+            }
+
+            public bool defaultCompletionCondition()
+            {
+                return completionCtr > completionTime;
+            }
+
+            public Stage setMultiLocation(List<Vector2> locations)
+            {
+                this.taskLocations = locations;
+                return this;
+            }
+
+            public Stage setTarget(Hex target)
+            {
+                this.target = target;
+                return this;
+            }
+            public Stage setTarget(Segment target)
+            {
+                this.targetSegment = target;
+                return this;
+            }
+            public Stage setTargetBuilding(Building target)
+            {
+                this.targetBuilding = target;
+                return this;
+            }
+            public Stage hasProgressBar(bool hasBar)
+            {
+                this.hasBar = hasBar;
+                return this;
+            }
+
+            public Stage setTaskBar()
+            {
+                if (!hasBar)
+                {
+                    return this;
+                }
+                if (targetBuilding != null)
+                {
+                    if (targetBuilding.isBig)
+                    {
+                        taskBarCanvas = targetBuilding.parentHex.taskbarCanvas;
+                        progressBar = targetBuilding.parentHex.progressBar;
+                        progressBar.sizeDelta = new Vector2(0, progressBar.sizeDelta.y);
+                        maxTaskBarWidth = 5;
+                    }
+                    else
+                    {
+                        SegmentBuilding s = (SegmentBuilding) targetBuilding;
+                        taskBarCanvas = s.parentSegment.taskbarCanvas;
+                        progressBar = s.parentSegment.progressBar;
+                        progressBar.sizeDelta = new Vector2(0, progressBar.sizeDelta.y);
+                        maxTaskBarWidth = 2;
+                    }
+                    return this;
+                }
+                else if (target != null)
+                {
+                    taskBarCanvas = target.taskbarCanvas;
+                    progressBar = target.progressBar;
+                    progressBar.sizeDelta = new Vector2(0, progressBar.sizeDelta.y);
+                    maxTaskBarWidth = 5;
+                    return this;
+                }
+                else
+                {
+                    taskBarCanvas = targetSegment.taskbarCanvas;
+                    progressBar = targetSegment.progressBar;
+                    progressBar.sizeDelta = new Vector2(0, progressBar.sizeDelta.y);
+                    maxTaskBarWidth = 2;
+                    return this;
+                }
+            }
+
+            public void setTaskBarVisible(bool visible)
+            {
+                if (taskBarCanvas == null)
+                {
+                    return;
+                }
+                taskBarCanvas.gameObject.SetActive(visible);
+            }
+
+            public void assignToDorf(Dorf d)
+            {
+                parent.assignedDorves.Add(d);
+                toBeAssigned.assignee = d;
+
+                PersonalTask newTaskInstance = toBeAssigned.makeCopy(toBeAssigned);
+
+                newTaskInstance.onAssign(d);
+
+
+
+                d.taskQueue.Add(newTaskInstance);
             }
         }
-
     }
 
-    public void assignDorfToTask(Dorf d, DorfTaskInProgress task)
+    [Serializable]
+    public class PersonalTask
     {
+        public GlobalTask.Stage parentTask;
 
-        if (task.assignedDorves.Count == 0)
-        {
-            task.start();
-        }
-
-        d.taskInProgress = task;
-        d.currentTask = task.type;
-        task.assignedDorves.Add(d);
-        if (!task.doesNotRequireLocation)
-        {
-            Vector2 randomTargetLoc = task.taskLocations[UnityEngine.Random.Range(0, task.taskLocations.Count - 1)];
-            d.addWaypoints(randomTargetLoc, task.target);
-            d.currentTaskTargetPos = randomTargetLoc;
-        }
-        else
-        {
-            d.currentTaskTargetPos = d.transform.position;
-        }
-        d.currentState = Dorf.DorfState.WALKING;
-        Debug.Log("Assigning Dorf to Task " + task.type);
-
-        task.onAssign(d);
-    }
-
-    public class DorfTaskInProgress
-    {
         public float completionCtr;
         public float timeForTask;
         public float miscCtr = 0.0f;
@@ -1154,10 +1464,12 @@ public class DorfManager : MonoBehaviour
         public DorfTask type;
         public Action result;
         public Action runMethod;
-        public Action<Dorf> assignMethod;
-        public List<Dorf> assignedDorves = new List<Dorf>();
-        public List<Dorf> wereAssigned = new List<Dorf>();
+        public Action assignMethod;
+        public Dorf assignee;
+
         public List<Vector2> taskLocations = new List<Vector2>();
+        public Vector2 taskLocation;
+
         public Hex target;
         public Segment targetSegment;
         public Building targetBuilding;
@@ -1168,22 +1480,29 @@ public class DorfManager : MonoBehaviour
         public int id;
         public int maxDorves = -1;
 
-        public RectTransform progressBar;
-        public Canvas taskBarCanvas;
-        public float maxTaskBarWidth;
         public bool doesNotRequireLocation;
         public bool onGoing;
 
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, List<Vector2> locations, Hex targetHex)
+        public Func<bool> completionCondition;
+        public Func<bool> advanceCondition;
+
+        public Action advance;
+
+        public PersonalTask(float timeToComplete, DorfTask type, Action value, List<Vector2> locations, Hex targetHex)
         {
             this.type = type;
             this.timeForTask = timeToComplete;
             result = value;
             taskLocations.AddRange(locations);
             target = targetHex;
-            setTaskBar(true);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
         }
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, List<Vector2> locations, Segment targetSegment)
+        public PersonalTask(float timeToComplete, DorfTask type, Action value, List<Vector2> locations, Segment targetSegment)
         {
             this.type = type;
             this.timeForTask = timeToComplete;
@@ -1191,9 +1510,15 @@ public class DorfManager : MonoBehaviour
             taskLocations.AddRange(locations);
             this.targetSegment = targetSegment;
             target = targetSegment.parentHex;
-            setTaskBar(false);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
+
         }
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, Vector2 location, Segment targetSegment)
+        public PersonalTask(float timeToComplete, DorfTask type, Action value, Vector2 location, Segment targetSegment)
         {
             this.type = type;
             this.timeForTask = timeToComplete;
@@ -1201,20 +1526,32 @@ public class DorfManager : MonoBehaviour
             taskLocations.Add(location);
             this.targetSegment = targetSegment;
             target = targetSegment.parentHex;
-            setTaskBar(false);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
+
         }
 
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value, Vector2 location, Hex targetHex)
+        public PersonalTask(float timeToComplete, DorfTask type, Action value, Vector2 location, Hex targetHex)
         {
             this.type = type;
             this.timeForTask = timeToComplete;
             result = value;
             taskLocations.Add(location);
             target = targetHex;
-            setTaskBar(true);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
+
         }
 
-        public DorfTaskInProgress(DorfTask type, Vector2 location, Building targetBuilding, int slot)
+        public PersonalTask(DorfTask type, Vector2 location, Building targetBuilding, int slot)
         {
             this.type = type;
             this.timeForTask = -1f;
@@ -1222,10 +1559,16 @@ public class DorfManager : MonoBehaviour
             this.targetBuilding = targetBuilding;
             this.targetBuildingSlot = slot;
             target = targetBuilding.parentHex;
-            setTaskBar(targetBuilding.isBig);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
+
         }
 
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Vector2 location, Building targetBuilding)
+        public PersonalTask(float timeToComplete, DorfTask type, Vector2 location, Building targetBuilding)
         {
             this.targetBuilding = targetBuilding;
             this.type = type;
@@ -1237,133 +1580,132 @@ public class DorfManager : MonoBehaviour
                 SegmentBuilding seg = (SegmentBuilding)targetBuilding;
                 targetSegment = seg.parentSegment;
             }
-            setTaskBar(targetBuilding.isBig);
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+
+            setLocation();
+
+
         }
-        public DorfTaskInProgress(float timeToComplete, DorfTask type, Action value)
+        public PersonalTask(float timeToComplete, DorfTask type, Action value)
         {
             this.type = type;
             this.timeForTask = timeToComplete;
             result = value;
             doesNotRequireLocation = true;
+            advanceCondition = defaultAdvanceCondition;
+            advance = defaultAdvance;
+            assignMethod = defaultOnAssign;
+            completionCondition = defaultCompletionCondition;
+            setLocation();
+
+
         }
 
-        public DorfTaskInProgress setMaxDorves(DorfTaskInProgress task, int maxDorves)
+        public PersonalTask setMaxDorves(PersonalTask task, int maxDorves)
         {
             task.maxDorves = maxDorves;
             return task;
         }
-
-        public DorfTaskInProgress setRunMethod(DorfTaskInProgress task, Action value)
+        public PersonalTask setLocation()
+        {
+            if (taskLocations.Count > 1)
+            {
+                taskLocation = taskLocations[UnityEngine.Random.Range(0, taskLocations.Count)];
+            }
+            else if (taskLocations.Count == 1)
+            {
+                taskLocation = taskLocations[0];
+            }
+            else
+            {
+                Debug.Log("Attempted to assign a task with no locations.");
+            }
+            return this;
+        }
+        public PersonalTask setRunMethod(PersonalTask task, Action value)
         {
             runMethod = value;
             return task;
         }
-
-        public DorfTaskInProgress setOnAssignMethod(DorfTaskInProgress task, Action<Dorf> value)
+        public PersonalTask setCompletionCondition(PersonalTask task, Func<bool> value)
+        {
+            completionCondition = value;
+            return task;
+        }
+        public PersonalTask setAdvanceCondition(PersonalTask task, Func<bool> value)
+        {
+            advanceCondition = value;
+            return task;
+        }
+        public PersonalTask setAdvanceMethod(PersonalTask task, Action value)
+        {
+            advance = value;
+            return task;
+        }
+        public PersonalTask setOnAssignMethod(PersonalTask task, Action value)
         {
             assignMethod = value;
             return task;
         }
 
-        public DorfTaskInProgress setResult(DorfTaskInProgress task, Action value)
+        public PersonalTask setResult(PersonalTask task, Action value)
         {
             result = value;
             return task;
         }
-        public DorfTaskInProgress setStorageBuilding(DorfTaskInProgress task, Building build)
+        public PersonalTask setStorageBuilding(PersonalTask task, Building build)
         {
             storageBuilding = build;
             return task;
         }
 
-        public void setTaskBar(bool isBig)
+        public bool defaultAdvanceCondition()
         {
-            if (isBig)
-            {
-                taskBarCanvas = target.taskbarCanvas;
-                progressBar = target.progressBar;
-                maxTaskBarWidth = 5;
-            }
-            else
-            {
-                taskBarCanvas = targetSegment.taskbarCanvas;
-                progressBar = targetSegment.progressBar;
-                maxTaskBarWidth = 2;
-            }
+            return Vector2.Distance(assignee.transform.position, taskLocation) < 0.1f;
+        }
+        public bool defaultCompletionCondition()
+        {
+            return completionCtr > timeForTask;
+        }
+        public void defaultAdvance()
+        {
+            parentTask.completionCtr += assignee.workRate * Time.deltaTime;
 
+        }
+        public void defaultOnAssign()
+        {
+            if (taskLocations.Count > 0)
+            {
+                taskLocation = taskLocations[UnityEngine.Random.Range(0, taskLocations.Count)];
+            }
+            assignee.waypoints.AddRange(HexManager.instance.pathFromPointToPoint(assignee.transform.position, taskLocation, HexManager.instance.closestHexToLoc(assignee.transform.position), HexManager.instance.closestHexToLoc(taskLocation)));
         }
 
         public void start()
         {
-            if (taskBarCanvas != null)
-            {
-                taskBarCanvas.gameObject.SetActive(true);
-                progressBar.sizeDelta = new Vector2(0f, 0.3f);
-            }
         }
 
         public void onAssign(Dorf d)
         {
-            if (assignMethod != null)
-            {
-                assignMethod(d);
-            }
+            assignee = d;
+            assignMethod();
         }
 
         public void complete()
         {
-            wereAssigned.Clear();
-            foreach (Dorf d in assignedDorves)
-            {
-                wereAssigned.Add(d);
-                d.taskInProgress = null;
-                d.waypoints.Clear();
-                d.currentState = Dorf.DorfState.IDLE;
-                d.currentTask = DorfTask.NONE;
-                d.targetBuilding = null;
-            }
-            DorfManager.instance.tasksToRemove.Add(this);
-            assignedDorves.Clear();
-
-            if (this.taskBarCanvas != null)
-            {
-                this.taskBarCanvas.gameObject.SetActive(false);
-            }
-
-            if (result != null) { result.Invoke(); }
-            wereAssigned.Clear();
+            parentTask.complete();
         }
 
         public void remove()
         {
-            wereAssigned.Clear();
-            foreach (Dorf d in assignedDorves)
-            {
-                wereAssigned.Add(d);
-                d.taskInProgress = null;
-                d.waypoints.Clear();
-                d.currentState = Dorf.DorfState.IDLE;
-                d.currentTask = DorfTask.NONE;
-                d.targetBuilding = null;
-                DorfManager.instance.dropAllResources(d);
-            }
-            DorfManager.instance.tasksToRemove.Add(this);
-            assignedDorves.Clear();
 
-            if (this.taskBarCanvas != null)
-            {
-                this.taskBarCanvas.gameObject.SetActive(false);
-            }
         }
 
         public void abandon(Dorf d)
         {
-            d.taskInProgress.assignedDorves.Remove(d);
-            d.taskInProgress = null;
-            d.waypoints.Clear();
-            d.currentState = Dorf.DorfState.IDLE;
-            d.currentTask = DorfTask.NONE;
-            DorfManager.instance.dropAllResources(d);
         }
 
         public void run()
@@ -1372,6 +1714,36 @@ public class DorfManager : MonoBehaviour
             {
                 runMethod.Invoke();
             }
+        }
+
+        public void advanceTask()
+        {
+            advance();
+            parentTask.advance();
+            if (parentTask.completionCondition())
+            {
+                parentTask.complete();
+            }
+        }
+
+        public bool isCompleteCheck()
+        {
+            return (completionCtr >= timeForTask) || completionCondition();
+        }
+
+        public PersonalTask makeCopy(PersonalTask target)
+        {
+            PersonalTask newTask = new PersonalTask(target.timeForTask, target.type, target.result, target.taskLocations, target.target);
+            newTask = newTask.setAdvanceCondition(newTask, advanceCondition).setAdvanceMethod(newTask, advance).setCompletionCondition(newTask, completionCondition).setRunMethod(newTask, runMethod).setOnAssignMethod(newTask, target.assignMethod);
+            newTask.targetSegment = target.targetSegment;
+            newTask.targetBuilding = target.targetBuilding;
+            newTask.assignee = target.assignee;
+            newTask.taskLocation = target.taskLocation;
+            newTask.parentTask = target.parentTask;
+            newTask.maxDorves = target.maxDorves;
+            newTask.onGoing = target.onGoing;
+            newTask.targetBuildingSlot = target.targetBuildingSlot;
+            return newTask;
         }
     }
 }

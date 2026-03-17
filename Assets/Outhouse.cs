@@ -7,7 +7,7 @@ public class Outhouse : SegmentBuilding
     public override void setTask(Segment seg)
     {
         gatheredBuildingResources.Clear();
-        DorfManager.instance.setConstructionSite(this);
+        //DorfManager.instance.setConstructionSite(this);
         isBuilding = true;
         seg.occupied = true;
     }

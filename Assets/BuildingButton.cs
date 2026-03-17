@@ -37,6 +37,14 @@ public class BuildingButton : MonoBehaviour
         if (canPeform)
         {
             UIManager.instance.currentlySelectedBuilding = thisBuilding;
+            if (thisBuilding.requiresDry || thisBuilding.requiresWater)
+            {
+                HexManager.instance.showAllWaterTiles();
+            }
+            else if (HexManager.instance.showingWaterTiles)
+            {
+                HexManager.instance.hideWaterTiles();
+            }
             HexManager.instance.currentSelectionMode = mode;
             HexManager.instance.changeMode(mode);
             UIManager.instance.updateCounterDisplay();

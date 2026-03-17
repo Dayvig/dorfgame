@@ -70,20 +70,41 @@ public class Stone : Feature
         if (UIManager.instance.currentTask.Equals(DorfTask.MINE))
         {
             taskHover.gameObject.SetActive(false);
-            DorfManager.DorfTaskInProgress thisTask = new DorfManager.DorfTaskInProgress(4.0f, DorfTask.MINE,
-                () =>
-                {
-                    parentHex.toRemove.Add(this);
-                    taskHover.gameObject.SetActive(false);
-                    ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, 50, true);
-                    UIManager.instance.updateCounterDisplay();
-                    for (int i = 0; i < 10; i++)
-                    {
-                        ResourceManager.instance.createNewWorldResource(parentHex, ResourceManager.ResourceType.ROCKS, this.gameObject.transform.position, 1.0f, true);
-                    }
-                }
-                , parentHex.miningPoints(), parentHex);
-            DorfManager.instance.allCurrentTasks.Add(thisTask);
+            createNewGlobalMiningTask();
         }
+    }
+
+    public void createNewGlobalMiningTask()
+    {
+        DorfManager.GlobalTask newMiningTask = new DorfManager.GlobalTask(DorfTask.MINE, 8);
+
+        DorfManager.PersonalTask Stage1Task = new DorfManager.PersonalTask(0f, DorfTask.HAUL, () => { }, this.parentHex.miningPoints(), this.parentHex);
+
+        DorfManager.GlobalTask.Stage Stage1 = new DorfManager.GlobalTask.Stage(newMiningTask, DorfTask.MINE, 10f, this.parentHex.transform.position,
+            () => { },
+            Stage1Task);
+
+        Stage1.setMultiLocation(this.parentHex.miningPoints());
+        Stage1.setTarget(this.parentHex);
+        Stage1.setTaskBar();
+        Stage1.setTaskBarVisible(true);
+
+        Stage1Task.parentTask = Stage1;
+
+        newMiningTask.stages.Add(Stage1);
+        newMiningTask.completionMethod = () =>
+        {
+            parentHex.toRemove.Add(this);
+            taskHover.gameObject.SetActive(false);
+            ResourceManager.instance.addResource(ResourceManager.ResourceType.ROCKS, 50, true);
+            UIManager.instance.updateCounterDisplay();
+            for (int i = 0; i < 10; i++)
+            {
+                ResourceManager.instance.createNewWorldResource(parentHex, ResourceManager.ResourceType.ROCKS, this.gameObject.transform.position, 1.0f, true);
+            }
+        };
+        
+
+        DorfManager.instance.taskQueue.Add(newMiningTask);
     }
 }

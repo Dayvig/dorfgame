@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ResourceManager : MonoBehaviour
@@ -17,6 +18,8 @@ public class ResourceManager : MonoBehaviour
     public int Manure = 0;
     public int Beer = 0;
     public int Hops = 0;
+    public int Clay = 0;
+    public int Iron = 0;
 
     public int FoodClutter = 0;
     public int RockClutter = 0;
@@ -24,6 +27,8 @@ public class ResourceManager : MonoBehaviour
     public int ManureClutter = 0;
     public int BeerClutter = 0;
     public int HopsClutter = 0;
+    public int ClayClutter = 0;
+    public int IronClutter = 0;
 
     public List<Resource> resourceRefs = new List<Resource>();
     public List<WorldResource> toBeDestroyed = new List<WorldResource>();
@@ -45,7 +50,9 @@ public class ResourceManager : MonoBehaviour
         ROCKDUST,
         MANURE,
         BEER,
-        HOPS
+        HOPS,
+        CLAY,
+        IRON
     }
 
     private void Update()
@@ -80,7 +87,10 @@ public class ResourceManager : MonoBehaviour
                 if (isClutter) { return ref BeerClutter; } else { return ref Beer; }
             case ResourceType.HOPS:
                 if (isClutter) { return ref HopsClutter; } else { return ref Hops; }
-
+            case ResourceType.CLAY:
+                if (isClutter) { return ref ClayClutter; } else { return ref Clay; }
+            case ResourceType.IRON:
+                if (isClutter) { return ref IronClutter; } else { return ref Iron; }
         }
         Debug.Log("Attempted to get a resource which doesn't exist");
         return ref Food;
@@ -111,11 +121,14 @@ public class ResourceManager : MonoBehaviour
 
     public WorldResource createNewWorldResource(Hex targetHex, ResourceManager.ResourceType resource, Vector2 center, float range, bool isClutter)
     {
+        //Debug.Log("Attempting Spawn of : " + resource);
         Resource target = null;
         foreach (Resource r in ResourceManager.instance.resourceRefs)
         {
+            //Debug.Log(resource + " = " + r.type + " ?");
             if (r.type.Equals(resource))
             {
+                //Debug.Log("Spawning " + resource);
                 target = r;
                 break;
             }
